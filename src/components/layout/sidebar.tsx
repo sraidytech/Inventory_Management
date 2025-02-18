@@ -2,39 +2,45 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LucideIcon, LayoutDashboard, Package, Users, ShoppingCart, Settings } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { 
+  LayoutDashboard, 
+  Package, 
+  Users, 
+  ShoppingCart,
+  Settings
+} from "lucide-react"
 
-interface SidebarLink {
-  title: string
-  href: string
-  icon: LucideIcon
-}
-
-const links: SidebarLink[] = [
+const routes = [
   {
-    title: "Dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
     href: "/dashboard",
-    icon: LayoutDashboard
+    color: "text-sky-500"
   },
   {
-    title: "Inventory",
+    label: "Inventory",
+    icon: Package,
     href: "/inventory",
-    icon: Package
+    color: "text-violet-500"
   },
   {
-    title: "Suppliers",
+    label: "Suppliers",
+    icon: Users,
     href: "/suppliers",
-    icon: Users
+    color: "text-pink-500"
   },
   {
-    title: "Transactions",
+    label: "Transactions",
+    icon: ShoppingCart,
     href: "/transactions",
-    icon: ShoppingCart
+    color: "text-orange-500"
   },
   {
-    title: "Settings",
+    label: "Settings",
+    icon: Settings,
     href: "/settings",
-    icon: Settings
+    color: "text-gray-500"
   }
 ]
 
@@ -42,29 +48,31 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-full w-64 flex-col bg-gray-900 text-white">
-      <div className="flex h-16 items-center px-6">
-        <h1 className="text-lg font-semibold">Inventory Management</h1>
-      </div>
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {links.map((link) => {
-          const isActive = pathname === link.href
-          return (
+    <div className="space-y-4 py-4 flex flex-col h-full bg-[#111827] text-white">
+      <div className="px-3 py-2 flex-1">
+        <Link href="/dashboard" className="flex items-center pl-3 mb-14">
+          <h1 className="text-2xl font-bold">
+            Inventory Management
+          </h1>
+        </Link>
+        <div className="space-y-1">
+          {routes.map((route) => (
             <Link
-              key={link.href}
-              href={link.href}
-              className={`flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive 
-                  ? "bg-gray-800 text-white" 
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              }`}
+              key={route.href}
+              href={route.href}
+              className={cn(
+                "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
+                pathname === route.href ? "text-white bg-white/10" : "text-zinc-400"
+              )}
             >
-              <link.icon className="mr-3 h-5 w-5" />
-              {link.title}
+              <div className="flex items-center flex-1">
+                <route.icon className={cn("h-5 w-5 mr-3", route.color)} />
+                {route.label}
+              </div>
             </Link>
-          )
-        })}
-      </nav>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
