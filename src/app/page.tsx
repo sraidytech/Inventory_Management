@@ -4,9 +4,9 @@ import { redirect } from "next/navigation"
 export default async function Home() {
   const { userId } = await auth()
 
-  if (userId) {
-    redirect("/dashboard")
+  if (!userId) {
+    redirect("/sign-in")
   }
 
-  redirect("/sign-in")
+  redirect("/dashboard")
 }

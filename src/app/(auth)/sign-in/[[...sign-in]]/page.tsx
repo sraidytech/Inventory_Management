@@ -2,8 +2,13 @@ import { SignIn } from "@clerk/nextjs"
 
 export default function SignInPage() {
   return (
-    <div className="flex h-screen items-center justify-center">
-      <SignIn />
-    </div>
+    <SignIn
+      appearance={{
+        elements: {
+          formButtonPrimary: "bg-slate-800 hover:bg-slate-900",
+          card: "shadow-none",
+        },
+      }}
+    />
   )
 }
