@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card"
 import { Package, ShoppingCart, Users, AlertTriangle } from "lucide-react"
+import { auth } from "@clerk/nextjs/server"
 
 const stats = [
   {
@@ -28,7 +29,13 @@ const stats = [
   }
 ]
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const { userId } = await auth()
+
+  if (!userId) {
+    return null
+  }
+
   return (
     <div className="space-y-6">
       <div>
