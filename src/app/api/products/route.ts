@@ -1,96 +1,112 @@
-import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
-import { productSchema } from "@/lib/validations";
-import { withAuth, withValidation } from "@/lib/api-middleware";
-import { ApiError } from "@/lib/api-error";
+import type { Prisma } from "@prisma/client";
+import { productSchema } from "@/lib/validations/product";
+import { auth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-const { QueryMode } = Prisma;
+export async function POST(req: Request) {
+  try {
+    const session = await auth();
+    const userId = session?.userId;
 
-// GET /api/products
-export const GET = withAuth(async (req: NextRequest) => {
-  const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get("page") ?? "1");
-  const limit = parseInt(searchParams.get("limit") ?? "10");
-  const search = searchParams.get("search") ?? "";
-  const categoryId = searchParams.get("categoryId");
-  const supplierId = searchParams.get("supplierId");
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
-  const where = {
-    ...(search && {
-      OR: [
-        { name: { contains: search, mode: QueryMode.insensitive } },
-        { sku: { contains: search, mode: QueryMode.insensitive } },
-        { description: { contains: search, mode: QueryMode.insensitive } },
-      ],
-    }),
-    ...(categoryId && { categoryId }),
-    ...(supplierId && { supplierId }),
-  };
+    const body = await req.json();
+    const validatedData = productSchema.parse(body);
 
-  const [total, items] = await Promise.all([
-    prisma.product.count({ where }),
-    prisma.product.findMany({
-      where,
-      include: {
-        category: true,
-        supplier: true,
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+    const product = await prisma.product.create({
+      data: validatedData,
+    });
 
-  return {
-    items,
-    metadata: {
+    return NextResponse.json(product, { status: 201 });
+  } catch (error) {
+    console.error("Error creating product:", error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    const session = await auth();
+    const userId = session?.userId;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const search = searchParams.get("search") || "";
+    const categoryId = searchParams.get("categoryId");
+    const supplierId = searchParams.get("supplierId");
+    const lowStock = searchParams.get("lowStock") === "true";
+
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.ProductWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { sku: { contains: search } },
+        { description: { contains: search } },
+      ];
+    }
+
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+
+    if (supplierId) {
+      where.supplierId = supplierId;
+    }
+
+    if (lowStock) {
+      where.quantity = { lte: 10 }; // Using fixed value for now
+    }
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        include: {
+          category: true,
+          supplier: true,
+        },
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      products,
       total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    },
-  };
-});
-
-// POST /api/products
-export const POST = withValidation(productSchema, async (req: NextRequest) => {
-  const data = await req.json();
-
-  // Check if SKU already exists
-  const existingProduct = await prisma.product.findUnique({
-    where: { sku: data.sku },
-  });
-
-  if (existingProduct) {
-    throw ApiError.Conflict("Product with this SKU already exists");
+      pages: Math.ceil(total / limit),
+    });
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
-
-  // Verify category exists
-  const category = await prisma.category.findUnique({
-    where: { id: data.categoryId },
-  });
-
-  if (!category) {
-    throw ApiError.BadRequest("Category not found");
-  }
-
-  // Verify supplier exists
-  const supplier = await prisma.supplier.findUnique({
-    where: { id: data.supplierId },
-  });
-
-  if (!supplier) {
-    throw ApiError.BadRequest("Supplier not found");
-  }
-
-  const product = await prisma.product.create({
-    data,
-    include: {
-      category: true,
-      supplier: true,
-    },
-  });
-
-  return product;
-});
+}
