@@ -1,6 +1,8 @@
 import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { useCategoriesAndSuppliers } from "@/hooks/use-categories-and-suppliers";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ProductFormData, Unit, productSchema } from "@/lib/validations/product";
+import { ProductFormData, productSchema } from "@/lib/validations/product";
 import {
   Form,
   FormControl,
@@ -30,6 +32,7 @@ export function ProductForm({
   onSubmit,
   isLoading = false,
 }: ProductFormProps) {
+  const { categories, suppliers, isLoading: isLoadingOptions } = useCategoriesAndSuppliers();
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -39,18 +42,30 @@ export function ProductForm({
       price: initialData?.price || 0,
       quantity: initialData?.quantity || 0,
       minQuantity: initialData?.minQuantity || 0,
-      unit: initialData?.unit || Unit.PIECE,
+      unit: initialData?.unit || "PIECE",
       categoryId: initialData?.categoryId || "",
       supplierId: initialData?.supplierId || "",
     },
   });
 
+  const [error, setError] = useState<string | null>(null);
+
   const handleSubmit = async (data: ProductFormData) => {
     try {
-      await onSubmit(data);
+      setError(null);
+      // Convert numeric strings to numbers
+      const formattedData = {
+        ...data,
+        price: Number(data.price),
+        quantity: Number(data.quantity),
+        minQuantity: Number(data.minQuantity),
+      };
+      console.log('Submitting data:', formattedData);
+      await onSubmit(formattedData);
       form.reset();
     } catch (error) {
       console.error("Failed to save product:", error);
+      setError(error instanceof Error ? error.message : "Failed to save product");
     }
   };
 
@@ -126,9 +141,9 @@ export function ProductForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value={Unit.KG}>Kilogram (KG)</SelectItem>
-                    <SelectItem value={Unit.GRAM}>Gram (G)</SelectItem>
-                    <SelectItem value={Unit.PIECE}>Piece</SelectItem>
+                    <SelectItem value="KG">Kilogram (KG)</SelectItem>
+                    <SelectItem value="GRAM">Gram (G)</SelectItem>
+                    <SelectItem value="PIECE">Piece</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -146,7 +161,7 @@ export function ProductForm({
                 <FormControl>
                   <Input
                     type="number"
-                    step={form.watch("unit") === Unit.GRAM ? "1" : "0.001"}
+                    step={form.watch("unit") === "GRAM" ? "1" : "0.001"}
                     suffix={form.watch("unit")}
                     {...field}
                     onChange={(e) => field.onChange(parseFloat(e.target.value))}
@@ -167,12 +182,72 @@ export function ProductForm({
                 <FormControl>
                   <Input
                     type="number"
-                    step={form.watch("unit") === Unit.GRAM ? "1" : "0.001"}
+                    step={form.watch("unit") === "GRAM" ? "1" : "0.001"}
                     suffix={form.watch("unit")}
                     {...field}
                     onChange={(e) => field.onChange(parseFloat(e.target.value))}
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Category Selection */}
+          <FormField
+            control={form.control}
+            name="categoryId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={isLoadingOptions}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {categories.map((category: { id: string; name: string }) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Supplier Selection */}
+          <FormField
+            control={form.control}
+            name="supplierId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Supplier</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={isLoadingOptions}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select supplier" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {suppliers.map((supplier: { id: string; name: string }) => (
+                      <SelectItem key={supplier.id} value={supplier.id}>
+                        {supplier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -197,6 +272,12 @@ export function ProductForm({
             </FormItem>
           )}
         />
+
+        {error && (
+          <div className="bg-destructive/15 text-destructive px-4 py-3 rounded-md mb-6">
+            {error}
+          </div>
+        )}
 
         <div className="flex justify-end space-x-4">
           <Button

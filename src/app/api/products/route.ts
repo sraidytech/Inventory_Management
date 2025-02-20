@@ -6,35 +6,60 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
+    // Check authentication
     const session = await auth();
     const userId = session?.userId;
 
     if (!userId) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
 
+    // Parse request body
     const body = await req.json();
+    console.log('Request body:', body);
+
+    // Validate data
     const validatedData = productSchema.parse(body);
+    console.log('Validated data:', validatedData);
 
-    const product = await prisma.product.create({
-      data: validatedData,
-    });
+    try {
+      // Create product
+      const product = await prisma.product.create({
+        data: validatedData,
+        include: {
+          category: true,
+          supplier: true,
+        },
+      });
 
-    return NextResponse.json(product, { status: 201 });
-  } catch (error) {
-    console.error("Error creating product:", error);
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
+      return NextResponse.json({ success: true, data: product }, { status: 201 });
+    } catch (dbError) {
+      let errorMessage = 'Failed to create product';
+      
+      // Check for specific Prisma errors
+      if (dbError instanceof Error) {
+        if (dbError.message.includes('Foreign key constraint failed')) {
+          errorMessage = 'Invalid category or supplier ID';
+        } else if (dbError.message.includes('Unique constraint failed')) {
+          errorMessage = 'SKU already exists';
+        } else {
+          errorMessage = dbError.message;
+        }
+      }
+
+      return new NextResponse(
+        JSON.stringify({ success: false, error: errorMessage }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
+  } catch (error) {
+    console.error('Validation error:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { success: false, error: 'Invalid product data' },
+      { status: 400 }
     );
   }
 }
@@ -103,10 +128,10 @@ export async function GET(req: Request) {
       pages: Math.ceil(total / limit),
     });
   } catch (error) {
-    console.error("Error fetching products:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch products';
+    return new NextResponse(
+      JSON.stringify({ success: false, error: errorMessage }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }

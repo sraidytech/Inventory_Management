@@ -1,11 +1,5 @@
 import { z } from "zod";
 
-export const Unit = {
-  KG: "KG",
-  GRAM: "GRAM",
-  PIECE: "PIECE",
-} as const;
-
 export const productSchema = z.object({
   name: z
     .string()
@@ -33,10 +27,9 @@ export const productSchema = z.object({
     .number()
     .min(0, "Minimum quantity must be greater than or equal to 0")
     .max(1000000, "Minimum quantity must be less than 1,000,000"),
-  unit: z.enum([Unit.KG, Unit.GRAM, Unit.PIECE], {
+  unit: z.enum(["KG", "GRAM", "PIECE"], {
     required_error: "Unit is required",
-    invalid_type_error: "Unit must be KG, GRAM, or PIECE",
-  }),
+  }).default("PIECE"),
   categoryId: z.string().uuid("Invalid category ID"),
   supplierId: z.string().uuid("Invalid supplier ID"),
   image: z.string().optional(),
@@ -53,12 +46,12 @@ export const formatPrice = (price: number) => {
 };
 
 // Helper function to format quantity with unit
-export const formatQuantity = (quantity: number, unit: keyof typeof Unit) => {
+export const formatQuantity = (quantity: number, unit: "KG" | "GRAM" | "PIECE") => {
   return `${quantity} ${unit}`;
 };
 
 // Helper function to convert between units
-export const convertUnit = (value: number, fromUnit: keyof typeof Unit, toUnit: keyof typeof Unit) => {
+export const convertUnit = (value: number, fromUnit: "KG" | "GRAM" | "PIECE", toUnit: "KG" | "GRAM" | "PIECE") => {
   if (fromUnit === toUnit) return value;
   
   // Convert everything to grams first

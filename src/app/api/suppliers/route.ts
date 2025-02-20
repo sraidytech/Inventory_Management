@@ -1,93 +1,35 @@
-import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { supplierSchema } from "@/lib/validations";
-import { withAuth, withValidation } from "@/lib/api-middleware";
-import { ApiError } from "@/lib/api-error";
+import { auth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-// GET /api/suppliers
-export const GET = withAuth(async (req: NextRequest) => {
-  const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get("page") ?? "1");
-  const limit = parseInt(searchParams.get("limit") ?? "10");
-  const search = searchParams.get("search") ?? "";
+export async function GET() {
+  try {
+    const session = await auth();
+    const userId = session?.userId;
 
-  const where = search
-    ? {
-        OR: [
-          {
-            name: {
-              contains: search,
-              mode: "insensitive" as const,
-            },
-          },
-          {
-            email: {
-              contains: search,
-              mode: "insensitive" as const,
-            },
-          },
-          {
-            phone: {
-              contains: search,
-              mode: "insensitive" as const,
-            },
-          },
-        ],
-      }
-    : {};
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
-  const [total, items] = await Promise.all([
-    prisma.supplier.count({ where }),
-    prisma.supplier.findMany({
-      where,
-      include: {
-        _count: {
-          select: { products: true },
-        },
-      },
-      skip: (page - 1) * limit,
-      take: limit,
+    const suppliers = await prisma.supplier.findMany({
       orderBy: { name: "asc" },
-    }),
-  ]);
-
-  return {
-    items,
-    metadata: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    },
-  };
-});
-
-// POST /api/suppliers
-export const POST = withValidation(supplierSchema, async (req: NextRequest) => {
-  const data = await req.json();
-
-  // Check if supplier with same email exists
-  const existingSupplier = await prisma.supplier.findFirst({
-    where: {
-      email: {
-        equals: data.email,
-        mode: "insensitive" as const,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
       },
-    },
-  });
+    });
 
-  if (existingSupplier) {
-    throw ApiError.Conflict("Supplier with this email already exists");
+    return NextResponse.json(suppliers);
+  } catch (error) {
+    console.error("Error fetching suppliers:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
-
-  const supplier = await prisma.supplier.create({
-    data,
-    include: {
-      _count: {
-        select: { products: true },
-      },
-    },
-  });
-
-  return supplier;
-});
+}
