@@ -47,16 +47,17 @@ export function useDashboardStats(): UseStatsReturn {
         throw new Error("Failed to fetch dashboard stats");
       }
 
-      const { data, error } = await response.json();
+      const responseData = await response.json();
       
-      if (error) {
-        throw new Error(error.message || "Failed to fetch dashboard stats");
+      if (!responseData.success) {
+        throw new Error(responseData.error || "Failed to fetch dashboard stats");
       }
 
-      if (!data) {
+      if (!responseData.data) {
         throw new Error("No data received from server");
       }
 
+      const { data } = responseData;
       setStats({
         totalProducts: data.totalProducts ?? 0,
         lowStockProducts: data.lowStockProducts ?? 0,
