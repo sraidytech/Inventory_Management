@@ -129,7 +129,7 @@ export default function InventoryPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() =>
-                            router.push(`/inventory/${product.id}`)
+                            router.push(`/inventory/${product.id}/edit`)
                           }
                         >
                           Edit

@@ -3,14 +3,21 @@ import { ZodSchema } from "zod";
 import { ApiError, createErrorResponse, createApiResponse } from "./api-error";
 import { auth } from "@clerk/nextjs/server";
 
-type HandlerFunction = (
+export interface RouteParams {
+  params: Promise<{
+    id: string;
+    [key: string]: unknown;
+  }>;
+}
+
+export type HandlerFunction = (
   req: NextRequest,
-  params: Record<string, string>,
+  params: RouteParams,
   userId: string
 ) => Promise<unknown>;
 
 export function withValidation(schema: ZodSchema, handler: HandlerFunction) {
-  return async (req: NextRequest, params: Record<string, string>) => {
+  return async (req: NextRequest, params: RouteParams) => {
     try {
       const { userId } = await auth();
       
@@ -58,7 +65,7 @@ export function withValidation(schema: ZodSchema, handler: HandlerFunction) {
 }
 
 export function withAuth(handler: HandlerFunction) {
-  return async (req: NextRequest, params: Record<string, string>) => {
+  return async (req: NextRequest, params: RouteParams) => {
     try {
       const { userId } = await auth();
       

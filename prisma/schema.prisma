@@ -33,8 +33,11 @@ model Category {
   name        String
   description String?
   products    Product[]
+  userId      String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@unique([name, userId])
 }
 
 model Supplier {
@@ -44,15 +47,18 @@ model Supplier {
   phone       String
   address     String
   products    Product[]
+  userId      String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@unique([email, userId])
 }
 
 model Product {
   id           String           @id @default(uuid())
   name         String
   description  String
-  sku          String          @unique
+  sku          String
   price        Float
   quantity     Float
   minQuantity  Float
@@ -62,9 +68,12 @@ model Product {
   categoryId   String
   supplier     Supplier        @relation(fields: [supplierId], references: [id])
   supplierId   String
+  userId       String
   transactions TransactionItem[]
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
+
+  @@unique([sku, userId])
 }
 
 model Transaction {

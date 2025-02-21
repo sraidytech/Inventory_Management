@@ -1,3 +1,5 @@
+"use client";
+
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { useCategoriesAndSuppliers } from "@/hooks/use-categories-and-suppliers";
