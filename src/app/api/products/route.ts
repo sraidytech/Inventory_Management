@@ -26,9 +26,12 @@ export async function POST(req: Request) {
     console.log('Validated data:', validatedData);
 
     try {
-      // Create product
+      // Create product with userId
       const product = await prisma.product.create({
-        data: validatedData,
+        data: {
+          ...validatedData,
+          userId, // Add userId from auth session
+        },
         include: {
           category: true,
           supplier: true,
