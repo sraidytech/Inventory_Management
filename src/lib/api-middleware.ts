@@ -25,9 +25,9 @@ export function withValidation(schema: ZodSchema, handler: HandlerFunction) {
         throw ApiError.Unauthorized();
       }
 
-      let body = undefined;
+      let validatedData = undefined;
       if (req.method !== "GET" && req.method !== "DELETE") {
-        body = await req.json();
+        const body = await req.json();
         const validationResult = schema.safeParse(body);
         
         if (!validationResult.success) {
@@ -42,9 +42,17 @@ export function withValidation(schema: ZodSchema, handler: HandlerFunction) {
           
           throw ApiError.BadRequest("Validation failed", errors);
         }
+        validatedData = validationResult.data;
       }
 
-      const result = await handler(req, params, userId);
+      // Create a new request with the validated data
+      const newRequest = new Request(req.url, {
+        method: req.method,
+        headers: req.headers,
+        body: validatedData ? JSON.stringify(validatedData) : undefined,
+      });
+
+      const result = await handler(newRequest as NextRequest, params, userId);
       return NextResponse.json(createApiResponse(result));
 
     } catch (error) {

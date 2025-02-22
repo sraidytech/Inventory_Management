@@ -29,7 +29,25 @@ export const GET = withAuth(async (req: NextRequest, params: RouteParams, userId
       throw ApiError.NotFound("Product not found");
     }
 
-    return product;
+    // Return only the fields needed by the form
+    if (!product) {
+      throw ApiError.NotFound("Product not found");
+    }
+
+    // Return the product data formatted for the form
+    return {
+      name: product.name,
+      description: product.description,
+      sku: product.sku,
+      price: product.price,
+      quantity: product.quantity,
+      minQuantity: product.minQuantity,
+      unit: product.unit,
+      categoryId: product.categoryId,
+      supplierId: product.supplierId,
+      userId: product.userId,
+      image: product.image
+    };
   } catch (error) {
     console.error('Error in GET /api/products/[id]:', error);
     throw error;
@@ -41,8 +59,10 @@ export const PUT = withValidation(
   productSchema,
   async (req: NextRequest, params: RouteParams, userId: string) => {
     const resolvedParams = await Promise.resolve(params.params);
-  console.log('PUT /api/products/[id]', { id: resolvedParams.id, userId });
-    const data = await req.json();
+    console.log('PUT /api/products/[id]', { id: resolvedParams.id, userId });
+    
+    // Get the validated data from the request body
+    const data = await req.clone().json();
     console.log('Request body:', data);
 
     // Check if product exists and belongs to user

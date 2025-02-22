@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCategoriesAndSuppliers } from "@/hooks/use-categories-and-suppliers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductFormData, productSchema } from "@/lib/validations/product";
@@ -38,17 +38,26 @@ export function ProductForm({
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: initialData?.name || "",
-      description: initialData?.description || "",
-      sku: initialData?.sku || "",
-      price: initialData?.price || 0,
-      quantity: initialData?.quantity || 0,
-      minQuantity: initialData?.minQuantity || 0,
-      unit: initialData?.unit || "PIECE",
-      categoryId: initialData?.categoryId || "",
-      supplierId: initialData?.supplierId || "",
+      name: "",
+      description: "",
+      sku: "",
+      price: 0,
+      quantity: 0,
+      minQuantity: 0,
+      unit: "PIECE",
+      categoryId: "",
+      supplierId: "",
     },
   });
+
+  // Update form values when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      Object.keys(initialData).forEach((key) => {
+        form.setValue(key as keyof ProductFormData, initialData[key as keyof ProductFormData]);
+      });
+    }
+  }, [initialData, form]);
 
   const [error, setError] = useState<string | null>(null);
 
