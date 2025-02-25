@@ -5,11 +5,12 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatPrice } from "@/lib/validations/product";
-import { AlertTriangle, CheckSquare, PlusIcon, SearchIcon, Square, Trash2Icon } from "lucide-react";
+import { AlertTriangle, CheckSquare, Eye, PlusIcon, SearchIcon, Square, Trash2Icon } from "lucide-react";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { toast } from "sonner";
 import { BulkActions } from "@/components/products/bulk-actions";
 import { useStockAlerts } from "@/hooks/use-stock-alerts";
+import { ProductDetailsDialog } from "@/components/products/product-details-dialog";
 
 interface Product {
   id: string;
@@ -34,6 +35,13 @@ export default function InventoryPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [detailsDialog, setDetailsDialog] = useState<{
+    isOpen: boolean;
+    productId: string | null;
+  }>({
+    isOpen: false,
+    productId: null,
+  });
   const { alerts = [] } = useStockAlerts();
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
@@ -158,8 +166,17 @@ export default function InventoryPage() {
                 </thead>
                 <tbody>
                   {products.map((product) => (
-                    <tr key={product.id} className="border-b">
-                      <td className="p-4">
+                    <tr 
+                      key={product.id} 
+                      className="border-b hover:bg-muted/50 cursor-pointer"
+                      onClick={() => {
+                        setDetailsDialog({
+                          isOpen: true,
+                          productId: product.id,
+                        });
+                      }}
+                    >
+                      <td className="p-4" onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -192,27 +209,42 @@ export default function InventoryPage() {
                       }`}>
                         {product.quantity} {product.unit}
                       </td>
-                      <td className="p-4 text-right">
+                      <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() =>
-                              router.push(`/inventory/${product.id}/edit`)
-                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDetailsDialog({
+                                isOpen: true,
+                                productId: product.id,
+                              });
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/inventory/${product.id}/edit`);
+                            }}
                           >
                             Edit
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() =>
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setDeleteDialog({
                                 isOpen: true,
                                 productId: product.id,
                                 productName: product.name,
-                              })
-                            }
+                              });
+                            }}
                           >
                             <Trash2Icon className="h-4 w-4 text-destructive" />
                           </Button>
@@ -269,6 +301,12 @@ export default function InventoryPage() {
         selectedProducts={selectedProducts}
         onClearSelection={() => setSelectedProducts([])}
         onProductsDeleted={fetchProducts}
+      />
+
+      <ProductDetailsDialog
+        productId={detailsDialog.productId}
+        isOpen={detailsDialog.isOpen}
+        onClose={() => setDetailsDialog({ isOpen: false, productId: null })}
       />
     </div>
   );

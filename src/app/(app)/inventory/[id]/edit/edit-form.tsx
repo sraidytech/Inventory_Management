@@ -51,14 +51,31 @@ export default function EditProductForm({
           console.log('Product not found, redirecting to 404');
           notFound();
         }
-        // Format numeric values
+        
+        // Check if the response has the expected structure
+        if (!response.success || !response.data) {
+          console.error('Invalid API response structure:', response);
+          throw new Error('Invalid API response structure');
+        }
+        
+        // Extract the product data from the response
+        const productData = response.data;
+        
+        // Create a formatted version of the data for the form
         const formattedData = {
-          ...response.data,
-          price: Number(response.data.price),
-          quantity: Number(response.data.quantity),
-          minQuantity: Number(response.data.minQuantity),
+          name: productData.name || '',
+          description: productData.description || '',
+          sku: productData.sku || '',
+          price: Number(productData.price || 0),
+          quantity: Number(productData.quantity || 0),
+          minQuantity: Number(productData.minQuantity || 0),
+          unit: productData.unit || 'KG',
+          categoryId: productData.categoryId || '',
+          supplierId: productData.supplierId || '',
+          image: productData.image || '',
         };
-        console.log('Formatted data:', formattedData);
+        
+        console.log('Formatted data for form:', formattedData);
         setProduct(formattedData);
       } catch (error) {
         console.error("Failed to load product:", error);

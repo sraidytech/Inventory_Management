@@ -96,7 +96,10 @@ export type ProductFormData = z.infer<typeof productFormSchema>;
 export type ProductApiData = z.infer<typeof productSchema>;
 
 // Helper function to format price in DH
-export const formatPrice = (price: number) => {
+export const formatPrice = (price: number | undefined | null) => {
+  if (price === undefined || price === null) {
+    return "0.00 DH";
+  }
   return `${price.toLocaleString('fr-MA', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

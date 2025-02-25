@@ -29,8 +29,10 @@ export const GET = withAuth(async (req: NextRequest, params: RouteParams, userId
       throw ApiError.NotFound("Product not found");
     }
 
-    // Return the product data formatted for the form
-    const formattedData = {
+    // Return the complete product data including relations without wrapping it again
+    // The withAuth middleware will wrap it in { success: true, data: ... }
+    return {
+      id: product.id,
       name: product.name,
       description: product.description,
       sku: product.sku,
@@ -41,11 +43,12 @@ export const GET = withAuth(async (req: NextRequest, params: RouteParams, userId
       categoryId: product.categoryId,
       supplierId: product.supplierId,
       userId: product.userId,
-      image: product.image
+      image: product.image,
+      category: product.category,
+      supplier: product.supplier,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt
     };
-
-    console.log('Formatted data:', formattedData);
-    return NextResponse.json({ success: true, data: formattedData });
   } catch (error) {
     console.error('Error in GET /api/products/[id]:', error);
     if (error instanceof ApiError) {
@@ -169,7 +172,9 @@ export const PUT = withAuth(
 
     console.log('Transaction completed successfully');
 
-    return NextResponse.json({ success: true, data: updatedProduct });
+    // Return the updated product without wrapping it again
+    // The withAuth middleware will wrap it in { success: true, data: ... }
+    return updatedProduct;
   }
 );
 
@@ -207,6 +212,8 @@ export const DELETE = withAuth(
       },
     });
 
-    return NextResponse.json({ success: true, message: "Product deleted successfully" });
+    // Return a simple message without wrapping it again
+    // The withAuth middleware will wrap it in { success: true, data: ... }
+    return { message: "Product deleted successfully" };
   }
 );
