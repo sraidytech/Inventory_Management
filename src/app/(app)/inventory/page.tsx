@@ -5,7 +5,11 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatPrice } from "@/lib/validations/product";
-import { PlusIcon, SearchIcon } from "lucide-react";
+import { AlertTriangle, CheckSquare, PlusIcon, SearchIcon, Square, Trash2Icon } from "lucide-react";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
+import { toast } from "sonner";
+import { BulkActions } from "@/components/products/bulk-actions";
+import { useStockAlerts } from "@/hooks/use-stock-alerts";
 
 interface Product {
   id: string;
@@ -29,7 +33,47 @@ export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const { alerts = [] } = useStockAlerts();
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    productId: string | null;
+    productName: string;
+  }>({
+    isOpen: false,
+    productId: null,
+    productName: "",
+  });
   const limit = 10;
+
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts((current) =>
+      current.includes(productId)
+        ? current.filter((id) => id !== productId)
+        : [...current, productId]
+    );
+  };
+
+  const handleDelete = async (productId: string) => {
+    try {
+      const response = await fetch(`/api/products/${productId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete product");
+      }
+
+      toast.success("Product deleted successfully");
+      fetchProducts();
+      router.refresh();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete product");
+    }
+  };
 
   // Memoize fetchProducts to prevent infinite loop
   const fetchProducts = useCallback(async () => {
@@ -102,6 +146,7 @@ export default function InventoryPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
+                    <th className="text-left p-4 w-8"></th>
                     <th className="text-left p-4">Name</th>
                     <th className="text-left p-4">SKU</th>
                     <th className="text-left p-4">Category</th>
@@ -114,26 +159,64 @@ export default function InventoryPage() {
                 <tbody>
                   {products.map((product) => (
                     <tr key={product.id} className="border-b">
-                      <td className="p-4">{product.name}</td>
+                      <td className="p-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => toggleProductSelection(product.id)}
+                        >
+                          {selectedProducts.includes(product.id) ? (
+                            <CheckSquare className="h-4 w-4" />
+                          ) : (
+                            <Square className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </td>
+                      <td className="p-4 flex items-center gap-2">
+                        {alerts.some((alert) => alert.productId === product.id) && (
+                          <AlertTriangle className="h-4 w-4 text-warning" />
+                        )}
+                        {product.name}
+                      </td>
                       <td className="p-4">{product.sku}</td>
                       <td className="p-4">{product.category.name}</td>
                       <td className="p-4">{product.supplier.name}</td>
                       <td className="p-4 text-right">
                         {formatPrice(product.price)}
                       </td>
-                      <td className="p-4 text-right">
+                      <td className={`p-4 text-right ${
+                        alerts.some((alert) => alert.productId === product.id)
+                          ? "text-warning"
+                          : ""
+                      }`}>
                         {product.quantity} {product.unit}
                       </td>
                       <td className="p-4 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            router.push(`/inventory/${product.id}/edit`)
-                          }
-                        >
-                          Edit
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              router.push(`/inventory/${product.id}/edit`)
+                            }
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setDeleteDialog({
+                                isOpen: true,
+                                productId: product.id,
+                                productName: product.name,
+                              })
+                            }
+                          >
+                            <Trash2Icon className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -168,6 +251,25 @@ export default function InventoryPage() {
           </div>
         </>
       )}
+
+      <DeleteDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={() =>
+          setDeleteDialog({ isOpen: false, productId: null, productName: "" })
+        }
+        onConfirm={async () => {
+          if (!deleteDialog.productId) return;
+          await handleDelete(deleteDialog.productId);
+        }}
+        title="Delete Product"
+        description={`Are you sure you want to delete "${deleteDialog.productName}"? This action cannot be undone.`}
+      />
+
+      <BulkActions
+        selectedProducts={selectedProducts}
+        onClearSelection={() => setSelectedProducts([])}
+        onProductsDeleted={fetchProducts}
+      />
     </div>
   );
 }

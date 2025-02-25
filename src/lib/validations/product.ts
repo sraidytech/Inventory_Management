@@ -1,7 +1,11 @@
 import { z } from "zod";
 
+// Schema for API validation
 export const productSchema = z.object({
-  userId: z.string().optional(),
+  userId: z.string({
+    required_error: "User ID is required",
+    invalid_type_error: "User ID must be a string",
+  }),
   name: z
     .string()
     .min(2, "Name must be at least 2 characters")
@@ -16,18 +20,26 @@ export const productSchema = z.object({
     .max(50, "SKU must be less than 50 characters")
     .regex(/^[A-Za-z0-9\-_]+$/, "SKU must contain only letters, numbers, hyphens, and underscores"),
   price: z
-    .number()
-    .min(0, "Price must be greater than or equal to 0")
-    .max(1000000, "Price must be less than 1,000,000")
-    .transform(val => Number(val.toFixed(2))), // Round to 2 decimal places for DH
+    .union([z.string(), z.number()])
+    .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))
+    .refine((val) => !isNaN(val), "Price must be a valid number")
+    .refine((val) => val >= 0, "Price must be greater than or equal to 0")
+    .refine((val) => val <= 1000000, "Price must be less than 1,000,000")
+    .transform(val => Number(val.toFixed(2))),
   quantity: z
-    .number()
-    .min(0, "Quantity must be greater than or equal to 0")
-    .max(1000000, "Quantity must be less than 1,000,000"),
+    .union([z.string(), z.number()])
+    .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))
+    .refine((val) => !isNaN(val), "Quantity must be a valid number")
+    .refine((val) => val >= 0, "Quantity must be greater than or equal to 0")
+    .refine((val) => val <= 1000000, "Quantity must be less than 1,000,000")
+    .transform(val => Number(val)),
   minQuantity: z
-    .number()
-    .min(0, "Minimum quantity must be greater than or equal to 0")
-    .max(1000000, "Minimum quantity must be less than 1,000,000"),
+    .union([z.string(), z.number()])
+    .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))
+    .refine((val) => !isNaN(val), "Minimum quantity must be a valid number")
+    .refine((val) => val >= 0, "Minimum quantity must be greater than or equal to 0")
+    .refine((val) => val <= 1000000, "Minimum quantity must be less than 1,000,000")
+    .transform(val => Number(val)),
   unit: z.enum(["KG", "GRAM", "PIECE"], {
     required_error: "Unit is required",
   }).default("PIECE"),
@@ -36,7 +48,52 @@ export const productSchema = z.object({
   image: z.string().optional(),
 });
 
-export type ProductFormData = z.infer<typeof productSchema>;
+// Schema for form validation (without userId)
+export const productFormSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters"),
+  description: z
+    .string()
+    .min(10, "Description must be at least 10 characters")
+    .max(500, "Description must be less than 500 characters"),
+  sku: z
+    .string()
+    .min(3, "SKU must be at least 3 characters")
+    .max(50, "SKU must be less than 50 characters")
+    .regex(/^[A-Za-z0-9\-_]+$/, "SKU must contain only letters, numbers, hyphens, and underscores"),
+  price: z
+    .union([z.string(), z.number()])
+    .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))
+    .refine((val) => !isNaN(val), "Price must be a valid number")
+    .refine((val) => val >= 0, "Price must be greater than or equal to 0")
+    .refine((val) => val <= 1000000, "Price must be less than 1,000,000")
+    .transform(val => Number(val.toFixed(2))), // Round to 2 decimal places for DH
+  quantity: z
+    .union([z.string(), z.number()])
+    .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))
+    .refine((val) => !isNaN(val), "Quantity must be a valid number")
+    .refine((val) => val >= 0, "Quantity must be greater than or equal to 0")
+    .refine((val) => val <= 1000000, "Quantity must be less than 1,000,000")
+    .transform(val => Number(val)),
+  minQuantity: z
+    .union([z.string(), z.number()])
+    .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))
+    .refine((val) => !isNaN(val), "Minimum quantity must be a valid number")
+    .refine((val) => val >= 0, "Minimum quantity must be greater than or equal to 0")
+    .refine((val) => val <= 1000000, "Minimum quantity must be less than 1,000,000")
+    .transform(val => Number(val)),
+  unit: z.enum(["KG", "GRAM", "PIECE"], {
+    required_error: "Unit is required",
+  }).default("PIECE"),
+  categoryId: z.string().uuid("Invalid category ID"),
+  supplierId: z.string().uuid("Invalid supplier ID"),
+  image: z.string().optional(),
+});
+
+export type ProductFormData = z.infer<typeof productFormSchema>;
+export type ProductApiData = z.infer<typeof productSchema>;
 
 // Helper function to format price in DH
 export const formatPrice = (price: number) => {

@@ -45,13 +45,21 @@ export default function EditProductForm({
     async function loadProduct() {
       try {
         console.log('Loading product with id:', id);
-        const data = await getProduct(id);
-        console.log('Loaded product data:', data);
-        if (!data) {
+        const response = await getProduct(id);
+        console.log('Loaded product data:', response);
+        if (!response) {
           console.log('Product not found, redirecting to 404');
           notFound();
         }
-        setProduct(data);
+        // Format numeric values
+        const formattedData = {
+          ...response.data,
+          price: Number(response.data.price),
+          quantity: Number(response.data.quantity),
+          minQuantity: Number(response.data.minQuantity),
+        };
+        console.log('Formatted data:', formattedData);
+        setProduct(formattedData);
       } catch (error) {
         console.error("Failed to load product:", error);
         setError("Failed to load product");
@@ -62,22 +70,36 @@ export default function EditProductForm({
     loadProduct();
   }, [id]);
 
-  async function updateProduct(data: ProductFormData) {
+  async function updateProduct(formData: ProductFormData) {
     try {
       setIsLoading(true);
-      const res = await fetch(`/api/products/${id}`, {
+      // Format data before sending
+      const requestData = {
+        ...formData,
+        price: Number(formData.price),
+        quantity: Number(formData.quantity),
+        minQuantity: Number(formData.minQuantity),
+      };
+
+      const response = await fetch(`/api/products/${id}`, {
         method: "PUT",
-        body: JSON.stringify(data),
+        body: JSON.stringify(requestData),
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
       });
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to update product");
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.errors) {
+          throw new Error(Object.values(errorData.errors).flat().join(", "));
+        }
+        throw new Error(errorData.message || "Failed to update product");
       }
+
+      const responseData = await response.json();
+      console.log('Update response:', responseData);
 
       router.push("/inventory");
       router.refresh();

@@ -1,8 +1,8 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { productSchema } from "@/lib/validations";
-import { withAuth, withValidation, RouteParams } from "@/lib/api-middleware";
+import { productSchema } from "@/lib/validations/product";
+import { withAuth, RouteParams } from "@/lib/api-middleware";
 import { ApiError } from "@/lib/api-error";
 
 // GET /api/products/[id]
@@ -29,41 +29,57 @@ export const GET = withAuth(async (req: NextRequest, params: RouteParams, userId
       throw ApiError.NotFound("Product not found");
     }
 
-    // Return only the fields needed by the form
-    if (!product) {
-      throw ApiError.NotFound("Product not found");
-    }
-
     // Return the product data formatted for the form
-    return {
+    const formattedData = {
       name: product.name,
       description: product.description,
       sku: product.sku,
-      price: product.price,
-      quantity: product.quantity,
-      minQuantity: product.minQuantity,
+      price: Number(product.price),
+      quantity: Number(product.quantity),
+      minQuantity: Number(product.minQuantity),
       unit: product.unit,
       categoryId: product.categoryId,
       supplierId: product.supplierId,
       userId: product.userId,
       image: product.image
     };
+
+    console.log('Formatted data:', formattedData);
+    return NextResponse.json({ success: true, data: formattedData });
   } catch (error) {
     console.error('Error in GET /api/products/[id]:', error);
-    throw error;
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { error: error.message, errors: error.errors },
+        { status: error.statusCode }
+      );
+    }
+    return NextResponse.json(
+      { error: 'Failed to fetch product' },
+      { status: 500 }
+    );
   }
 });
 
 // PUT /api/products/[id]
-export const PUT = withValidation(
-  productSchema,
+export const PUT = withAuth(
   async (req: NextRequest, params: RouteParams, userId: string) => {
     const resolvedParams = await Promise.resolve(params.params);
     console.log('PUT /api/products/[id]', { id: resolvedParams.id, userId });
     
-    // Get the validated data from the request body
-    const data = await req.clone().json();
-    console.log('Request body:', data);
+    // Parse and validate request body
+    const body = await req.json();
+    console.log('Request body:', body);
+
+    // Add userId to the request body
+    const dataWithUserId = {
+      ...body,
+      userId,
+    };
+
+    // Validate data
+    const validatedData = productSchema.parse(dataWithUserId);
+    console.log('Validated data:', validatedData);
 
     // Check if product exists and belongs to user
     const existingProduct = await prisma.product.findFirst({
@@ -77,43 +93,41 @@ export const PUT = withValidation(
       throw ApiError.NotFound("Product not found");
     }
 
-    // Check if new SKU already exists (if SKU is being changed)
-    if (data.sku !== existingProduct.sku) {
-      const skuExists = await prisma.product.findFirst({
+    // Check if new SKU already exists and verify category/supplier ownership
+    const [skuExists, category, supplier] = await Promise.all([
+      validatedData.sku !== existingProduct.sku
+        ? prisma.product.findFirst({
+            where: { 
+              sku: validatedData.sku,
+              userId,
+              NOT: { id: resolvedParams.id }
+            },
+          })
+        : null,
+      prisma.category.findFirst({
         where: { 
-          sku: data.sku,
-          userId,
-          NOT: { id: resolvedParams.id }
+          id: validatedData.categoryId,
+          userId 
         },
-      });
+      }),
+      prisma.supplier.findFirst({
+        where: { 
+          id: validatedData.supplierId,
+          userId 
+        },
+      }),
+    ]);
 
-      if (skuExists) {
-        throw ApiError.Conflict("Product with this SKU already exists");
-      }
+    if (skuExists) {
+      throw ApiError.Conflict("Product with this SKU already exists");
     }
-
-    // Verify category exists and belongs to user
-    const category = await prisma.category.findFirst({
-      where: { 
-        id: data.categoryId,
-        userId 
-      },
-    });
 
     if (!category) {
-      throw ApiError.BadRequest("Category not found");
+      throw ApiError.BadRequest("Category not found or does not belong to user");
     }
 
-    // Verify supplier exists and belongs to user
-    const supplier = await prisma.supplier.findFirst({
-      where: { 
-        id: data.supplierId,
-        userId 
-      },
-    });
-
     if (!supplier) {
-      throw ApiError.BadRequest("Supplier not found");
+      throw ApiError.BadRequest("Supplier not found or does not belong to user");
     }
 
     // Update using transaction to ensure atomicity
@@ -142,8 +156,7 @@ export const PUT = withValidation(
           userId
         },
         data: {
-          ...data,
-          userId
+          ...validatedData
         },
         include: {
           category: true,
@@ -156,7 +169,7 @@ export const PUT = withValidation(
 
     console.log('Transaction completed successfully');
 
-    return updatedProduct;
+    return NextResponse.json({ success: true, data: updatedProduct });
   }
 );
 
@@ -194,6 +207,6 @@ export const DELETE = withAuth(
       },
     });
 
-    return { message: "Product deleted successfully" };
+    return NextResponse.json({ success: true, message: "Product deleted successfully" });
   }
 );

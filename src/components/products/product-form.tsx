@@ -4,7 +4,8 @@ import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { useCategoriesAndSuppliers } from "@/hooks/use-categories-and-suppliers";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ProductFormData, productSchema } from "@/lib/validations/product";
+import { ZodError } from "zod";
+import { ProductFormData, productFormSchema } from "@/lib/validations/product";
 import {
   Form,
   FormControl,
@@ -35,48 +36,78 @@ export function ProductForm({
   isLoading = false,
 }: ProductFormProps) {
   const { categories, suppliers, isLoading: isLoadingOptions } = useCategoriesAndSuppliers();
+  console.log('Initial form data:', initialData);
+  const defaultValues: ProductFormData = {
+    name: initialData?.name ?? "",
+    description: initialData?.description ?? "",
+    sku: initialData?.sku ?? "",
+    price: Number(initialData?.price ?? 0),
+    quantity: Number(initialData?.quantity ?? 0),
+    minQuantity: Number(initialData?.minQuantity ?? 0),
+    unit: initialData?.unit ?? "PIECE",
+    categoryId: initialData?.categoryId ?? "",
+    supplierId: initialData?.supplierId ?? "",
+    image: initialData?.image ?? "",
+  };
+
   const form = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      sku: "",
-      price: 0,
-      quantity: 0,
-      minQuantity: 0,
-      unit: "PIECE",
-      categoryId: "",
-      supplierId: "",
-    },
+    resolver: zodResolver(productFormSchema),
+    defaultValues,
   });
 
-  // Update form values when initialData changes
+  // Log form values for debugging
   useEffect(() => {
-    if (initialData) {
-      Object.keys(initialData).forEach((key) => {
-        form.setValue(key as keyof ProductFormData, initialData[key as keyof ProductFormData]);
-      });
-    }
-  }, [initialData, form]);
+    const subscription = form.watch((value) => {
+      console.log('Form values:', value);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (data: ProductFormData) => {
     try {
       setError(null);
-      // Convert numeric strings to numbers
-      const formattedData = {
-        ...data,
+      // Ensure all required fields are present and properly formatted
+      const formattedData: ProductFormData = {
+        name: data.name,
+        description: data.description,
+        sku: data.sku,
         price: Number(data.price),
         quantity: Number(data.quantity),
         minQuantity: Number(data.minQuantity),
+        unit: data.unit || "PIECE",
+        categoryId: data.categoryId,
+        supplierId: data.supplierId,
+        image: data.image,
       };
-      console.log('Submitting data:', formattedData);
-      await onSubmit(formattedData);
-      form.reset();
+
+      // Validate the data before submitting
+      const validatedData = productFormSchema.parse(formattedData);
+      console.log('Submitting data:', validatedData);
+      
+      // Clear any previous errors
+      setError(null);
+      
+      await onSubmit(validatedData);
     } catch (error) {
       console.error("Failed to save product:", error);
-      setError(error instanceof Error ? error.message : "Failed to save product");
+      if (error instanceof ZodError) {
+        const messages = error.errors.map(e => e.message);
+        setError(messages.join(', '));
+      } else if (error instanceof Error) {
+        // Handle API error responses
+        const apiError = error as { error?: string; errors?: string[] };
+        if (apiError.errors) {
+          setError(apiError.errors.join(', '));
+        } else if (apiError.error) {
+          setError(apiError.error);
+        } else {
+          setError(error.message);
+        }
+      } else {
+        setError("Failed to save product");
+      }
     }
   };
 
@@ -127,7 +158,11 @@ export function ProductForm({
                     step="0.01"
                     suffix="DH"
                     {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                    value={field.value || ''}
+                    onChange={(e) => {
+                      const value = e.target.value ? parseFloat(e.target.value) : 0;
+                      field.onChange(value);
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -144,7 +179,7 @@ export function ProductForm({
                 <FormLabel>Unit</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value || "PIECE"}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -175,7 +210,11 @@ export function ProductForm({
                     step={form.watch("unit") === "GRAM" ? "1" : "0.001"}
                     suffix={form.watch("unit")}
                     {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                    value={field.value || ''}
+                    onChange={(e) => {
+                      const value = e.target.value ? parseFloat(e.target.value) : 0;
+                      field.onChange(value);
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -196,7 +235,11 @@ export function ProductForm({
                     step={form.watch("unit") === "GRAM" ? "1" : "0.001"}
                     suffix={form.watch("unit")}
                     {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                    value={field.value || ''}
+                    onChange={(e) => {
+                      const value = e.target.value ? parseFloat(e.target.value) : 0;
+                      field.onChange(value);
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -213,7 +256,7 @@ export function ProductForm({
                 <FormLabel>Category</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value || ""}
                   disabled={isLoadingOptions}
                 >
                   <FormControl>
@@ -243,7 +286,7 @@ export function ProductForm({
                 <FormLabel>Supplier</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value || ""}
                   disabled={isLoadingOptions}
                 >
                   <FormControl>
@@ -294,7 +337,22 @@ export function ProductForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() => form.reset()}
+            onClick={() => {
+              const defaultValues = {
+                name: initialData?.name ?? "",
+                description: initialData?.description ?? "",
+                sku: initialData?.sku ?? "",
+                price: Number(initialData?.price ?? 0),
+                quantity: Number(initialData?.quantity ?? 0),
+                minQuantity: Number(initialData?.minQuantity ?? 0),
+                unit: initialData?.unit ?? "PIECE",
+                categoryId: initialData?.categoryId ?? "",
+                supplierId: initialData?.supplierId ?? "",
+                image: initialData?.image ?? "",
+              };
+              form.reset(defaultValues);
+              setError(null);
+            }}
             disabled={isLoading}
           >
             Reset

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodSchema } from "zod";
-import { ApiError, createErrorResponse, createApiResponse } from "./api-error";
+import { ApiError } from "./api-error";
 import { auth } from "@clerk/nextjs/server";
 
 export interface RouteParams {
@@ -53,19 +53,25 @@ export function withValidation(schema: ZodSchema, handler: HandlerFunction) {
       });
 
       const result = await handler(newRequest as NextRequest, params, userId);
-      return NextResponse.json(createApiResponse(result));
+      return NextResponse.json({ success: true, data: result });
 
     } catch (error) {
       if (error instanceof ApiError) {
-        return NextResponse.json(
-          createErrorResponse(error),
-          { status: error.statusCode }
-        );
+      return NextResponse.json(
+        { error: error.message, errors: error.errors },
+        { status: error.statusCode }
+      );
       }
 
       console.error("Unhandled error:", error);
+      if (error instanceof Error) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 500 }
+        );
+      }
       return NextResponse.json(
-        createErrorResponse(ApiError.InternalServer()),
+        { error: 'Internal server error' },
         { status: 500 }
       );
     }
@@ -82,19 +88,24 @@ export function withAuth(handler: HandlerFunction) {
       }
 
       const result = await handler(req, params, userId);
-      return NextResponse.json(createApiResponse(result));
+      return NextResponse.json({ success: true, data: result });
 
     } catch (error) {
+      console.error("Unhandled error:", error);
       if (error instanceof ApiError) {
         return NextResponse.json(
-          createErrorResponse(error),
+          { error: error.message, errors: error.errors },
           { status: error.statusCode }
         );
       }
-
-      console.error("Unhandled error:", error);
+      if (error instanceof Error) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 500 }
+        );
+      }
       return NextResponse.json(
-        createErrorResponse(ApiError.InternalServer()),
+        { error: 'Internal server error' },
         { status: 500 }
       );
     }

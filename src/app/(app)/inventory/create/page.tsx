@@ -38,20 +38,39 @@ export default function CreateProductPage() {
   const handleSubmit = async (data: ProductFormData) => {
     try {
       setIsLoading(true);
+      // Validate data before sending
+      const formattedData = {
+        ...data,
+        userId, // Add userId to the request
+        price: Number(data.price),
+        quantity: Number(data.quantity),
+        minQuantity: Number(data.minQuantity),
+      };
+
       const response = await fetch("/api/products", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        credentials: "include",
+        body: JSON.stringify(formattedData),
       });
+
+      if (!response.ok) {
+        const result = await response.json();
+        console.error('API Error:', result);
+        
+        if (result.errors) {
+          throw new Error(Object.values(result.errors).flat().join(", "));
+        } else if (result.error) {
+          throw new Error(result.error);
+        } else {
+          throw new Error("Failed to create product");
+        }
+      }
 
       const result = await response.json();
       console.log('API Response:', result);
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to create product");
-      }
 
       startTransition(() => {
         router.push("/inventory");
