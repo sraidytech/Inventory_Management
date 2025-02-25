@@ -56,16 +56,18 @@ export async function GET() {
         },
       }),
 
-      // Total stock value
-      prisma.product.aggregate({
-        _sum: {
-          price: true,
-        },
+      // Total stock value - calculated as sum of (price * quantity) for each product
+      prisma.product.findMany({
         where: {
           quantity: {
             gt: 0
-          }
+          },
+          userId: session.userId
         },
+        select: {
+          price: true,
+          quantity: true
+        }
       }),
 
       // Today's transactions
@@ -103,7 +105,7 @@ export async function GET() {
           ...t,
           createdAt: t.createdAt.toISOString(),
         })) ?? [],
-        stockValue: stockValue._sum?.price ?? 0,
+    stockValue: stockValue.reduce((total, product) => total + (product.price * product.quantity), 0),
         salesToday: salesToday ?? 0,
         purchasesToday: purchasesToday ?? 0,
       }

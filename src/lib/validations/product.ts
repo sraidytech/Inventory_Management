@@ -37,12 +37,12 @@ export const productSchema = z.object({
     .union([z.string(), z.number()])
     .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))
     .refine((val) => !isNaN(val), "Minimum quantity must be a valid number")
-    .refine((val) => val >= 0, "Minimum quantity must be greater than or equal to 0")
+    .refine((val) => val >= 1, "Minimum quantity must be at least 1")
     .refine((val) => val <= 1000000, "Minimum quantity must be less than 1,000,000")
     .transform(val => Number(val)),
-  unit: z.enum(["KG", "GRAM", "PIECE"], {
+  unit: z.enum(["KG", "PIECE"], {
     required_error: "Unit is required",
-  }).default("PIECE"),
+  }).default("KG"),
   categoryId: z.string().uuid("Invalid category ID"),
   supplierId: z.string().uuid("Invalid supplier ID"),
   image: z.string().optional(),
@@ -81,12 +81,12 @@ export const productFormSchema = z.object({
     .union([z.string(), z.number()])
     .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))
     .refine((val) => !isNaN(val), "Minimum quantity must be a valid number")
-    .refine((val) => val >= 0, "Minimum quantity must be greater than or equal to 0")
+    .refine((val) => val >= 1, "Minimum quantity must be at least 1")
     .refine((val) => val <= 1000000, "Minimum quantity must be less than 1,000,000")
     .transform(val => Number(val)),
-  unit: z.enum(["KG", "GRAM", "PIECE"], {
+  unit: z.enum(["KG", "PIECE"], {
     required_error: "Unit is required",
-  }).default("PIECE"),
+  }).default("KG"),
   categoryId: z.string().uuid("Invalid category ID"),
   supplierId: z.string().uuid("Invalid supplier ID"),
   image: z.string().optional(),
@@ -104,26 +104,14 @@ export const formatPrice = (price: number) => {
 };
 
 // Helper function to format quantity with unit
-export const formatQuantity = (quantity: number, unit: "KG" | "GRAM" | "PIECE") => {
+export const formatQuantity = (quantity: number, unit: "KG" | "PIECE") => {
   return `${quantity} ${unit}`;
 };
 
 // Helper function to convert between units
-export const convertUnit = (value: number, fromUnit: "KG" | "GRAM" | "PIECE", toUnit: "KG" | "GRAM" | "PIECE") => {
+export const convertUnit = (value: number, fromUnit: "KG" | "PIECE", toUnit: "KG" | "PIECE") => {
   if (fromUnit === toUnit) return value;
   
-  // Convert everything to grams first
-  let inGrams = value;
-  if (fromUnit === 'KG') {
-    inGrams = value * 1000;
-  }
-
-  // Then convert to target unit
-  if (toUnit === 'KG') {
-    return inGrams / 1000;
-  } else if (toUnit === 'GRAM') {
-    return inGrams;
-  }
-
+  // No conversion needed between KG and PIECE as they are different units
   throw new Error('Cannot convert between these units');
 };

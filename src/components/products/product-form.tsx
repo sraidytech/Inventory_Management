@@ -44,7 +44,7 @@ export function ProductForm({
     price: Number(initialData?.price ?? 0),
     quantity: Number(initialData?.quantity ?? 0),
     minQuantity: Number(initialData?.minQuantity ?? 0),
-    unit: initialData?.unit ?? "PIECE",
+    unit: initialData?.unit ?? "KG",
     categoryId: initialData?.categoryId ?? "",
     supplierId: initialData?.supplierId ?? "",
     image: initialData?.image ?? "",
@@ -76,7 +76,7 @@ export function ProductForm({
         price: Number(data.price),
         quantity: Number(data.quantity),
         minQuantity: Number(data.minQuantity),
-        unit: data.unit || "PIECE",
+        unit: data.unit || "KG",
         categoryId: data.categoryId,
         supplierId: data.supplierId,
         image: data.image,
@@ -179,7 +179,7 @@ export function ProductForm({
                 <FormLabel>Unit</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  value={field.value || "PIECE"}
+                  value={field.value || "KG"}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -188,7 +188,6 @@ export function ProductForm({
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="KG">Kilogram (KG)</SelectItem>
-                    <SelectItem value="GRAM">Gram (G)</SelectItem>
                     <SelectItem value="PIECE">Piece</SelectItem>
                   </SelectContent>
                 </Select>
@@ -207,7 +206,7 @@ export function ProductForm({
                 <FormControl>
                   <Input
                     type="number"
-                    step={form.watch("unit") === "GRAM" ? "1" : "0.001"}
+                    step="0.001"
                     suffix={form.watch("unit")}
                     {...field}
                     value={field.value || ''}
@@ -232,7 +231,7 @@ export function ProductForm({
                 <FormControl>
                   <Input
                     type="number"
-                    step={form.watch("unit") === "GRAM" ? "1" : "0.001"}
+                    step="0.001"
                     suffix={form.watch("unit")}
                     {...field}
                     value={field.value || ''}
@@ -345,7 +344,7 @@ export function ProductForm({
                 price: Number(initialData?.price ?? 0),
                 quantity: Number(initialData?.quantity ?? 0),
                 minQuantity: Number(initialData?.minQuantity ?? 0),
-                unit: initialData?.unit ?? "PIECE",
+                unit: initialData?.unit ?? "KG",
                 categoryId: initialData?.categoryId ?? "",
                 supplierId: initialData?.supplierId ?? "",
                 image: initialData?.image ?? "",
