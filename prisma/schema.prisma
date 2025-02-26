@@ -53,6 +53,24 @@ model Supplier {
   @@unique([id, userId])
 }
 
+model Client {
+  id          String        @id @default(uuid())
+  name        String
+  email       String?
+  phone       String
+  address     String
+  notes       String?
+  totalDue    Float         @default(0)
+  amountPaid  Float         @default(0)
+  balance     Float         @default(0)
+  userId      String
+  transactions Transaction[] @relation("ClientTransactions")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([id, userId])
+}
+
 model Product {
   id           String           @id @default(uuid())
   name         String
@@ -82,6 +100,8 @@ model Transaction {
   total     Float
   notes     String?
   userId    String
+  clientId  String?
+  client    Client?           @relation("ClientTransactions", fields: [clientId], references: [id])
   items     TransactionItem[]
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt

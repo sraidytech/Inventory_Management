@@ -11,7 +11,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Tags
+  Tags,
+  UserCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -45,6 +46,12 @@ const routes = [
     icon: Users,
     href: "/suppliers",
     color: "text-pink-500"
+  },
+  {
+    label: "Clients",
+    icon: UserCircle,
+    href: "/clients",
+    color: "text-blue-500"
   },
   {
     label: "Transactions",

@@ -37,6 +37,28 @@ export const supplierFormSchema = z.object({
   address: z.string().min(1, "Address is required"),
 });
 
+export const clientSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().optional(),
+  phone: z.string().min(1, "Phone is required"),
+  address: z.string().min(1, "Address is required"),
+  notes: z.string().optional(),
+  totalDue: z.number().min(0, "Total due must be positive").optional(),
+  amountPaid: z.number().min(0, "Amount paid must be positive").optional(),
+  balance: z.number().optional(),
+  userId: z.string().min(1, "User ID is required"),
+});
+
+export const clientFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  phone: z.string().min(1, "Phone is required"),
+  address: z.string().min(1, "Address is required"),
+  email: z.string().optional(),
+  notes: z.string().optional(),
+  totalDue: z.number().min(0, "Total due must be positive").optional(),
+  amountPaid: z.number().min(0, "Amount paid must be positive").optional(),
+});
+
 export const transactionSchema = z.object({
   type: z.enum(["PURCHASE", "SALE", "ADJUSTMENT"]),
   status: z.enum(["PENDING", "COMPLETED", "CANCELLED"]).optional(),
@@ -60,5 +82,6 @@ export const userSettingsSchema = z.object({
 export type ProductInput = z.infer<typeof productSchema>;
 export type CategoryInput = z.infer<typeof categorySchema>;
 export type SupplierInput = z.infer<typeof supplierSchema>;
+export type ClientInput = z.infer<typeof clientSchema>;
 export type TransactionInput = z.infer<typeof transactionSchema>;
 export type UserSettingsInput = z.infer<typeof userSettingsSchema>;
