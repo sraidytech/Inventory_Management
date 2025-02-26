@@ -4,13 +4,14 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckSquare, Edit, Phone, PlusIcon, SearchIcon, Square, Trash2Icon } from "lucide-react";
+import { CheckSquare, Edit, Phone, PlusIcon, SearchIcon, Square, Trash2Icon, LayoutGrid, LayoutList, Mail, MapPin, DollarSign, ShoppingBag } from "lucide-react";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { toast } from "sonner";
 import { BulkActions } from "@/components/clients/bulk-actions";
 import { ClientForm } from "@/components/clients/client-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ClientsTableSkeleton } from "@/components/clients/loading";
+import { ClientsTableSkeleton, ClientsCardSkeleton } from "@/components/clients/loading";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Client {
   id: string;
@@ -34,6 +35,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [formDialog, setFormDialog] = useState<{
     isOpen: boolean;
@@ -162,10 +164,32 @@ export default function ClientsPage() {
             Manage your clients and customer relationships
           </p>
         </div>
-        <Button onClick={() => setFormDialog({ isOpen: true, clientId: null, clientData: null })}>
-          <PlusIcon className="w-4 h-4 mr-2" />
-          Add Client
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="bg-muted rounded-lg p-1 flex">
+            <Button
+              variant={viewMode === 'card' ? 'default' : 'ghost'}
+              size="sm"
+              className="h-8 px-2"
+              onClick={() => setViewMode('card')}
+              aria-label="Card view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              size="sm"
+              className="h-8 px-2"
+              onClick={() => setViewMode('table')}
+              aria-label="Table view"
+            >
+              <LayoutList className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button onClick={() => setFormDialog({ isOpen: true, clientId: null, clientData: null })}>
+            <PlusIcon className="w-4 h-4 mr-2" />
+            Add Client
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6">
@@ -181,30 +205,17 @@ export default function ClientsPage() {
       </div>
 
       {isLoading ? (
-        <ClientsTableSkeleton />
+        viewMode === 'card' ? <ClientsCardSkeleton /> : <ClientsTableSkeleton />
       ) : (
         <>
-          <div className="rounded-lg border bg-card">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-4 w-8"></th>
-                    <th className="text-left p-4">Name</th>
-                    <th className="text-left p-4">Contact</th>
-                    <th className="text-left p-4">Address</th>
-                    <th className="text-right p-4">Balance</th>
-                    <th className="text-right p-4">Transactions</th>
-                    <th className="text-right p-4">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {clients.map((client) => (
-                    <tr 
-                      key={client.id} 
-                      className="border-b hover:bg-muted/50"
-                    >
-                      <td className="p-4">
+          {viewMode === 'card' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {clients.map((client) => (
+                <Card key={client.id} className="overflow-hidden hover:shadow-md transition-shadow duration-200">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg font-bold">{client.name}</CardTitle>
+                      <div className="flex gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -217,56 +228,152 @@ export default function ClientsPage() {
                             <Square className="h-4 w-4" />
                           )}
                         </Button>
-                      </td>
-                      <td className="p-4">{client.name}</td>
-                      <td className="p-4">
-                        <div className="flex items-center text-sm">
-                          <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>{client.phone}</span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pb-2">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{client.phone}</span>
+                      </div>
+                      {client.email && (
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span>{client.email}</span>
                         </div>
-                      </td>
-                      <td className="p-4">{client.address}</td>
-                      <td className="p-4 text-right">
-                        <div className="flex items-center justify-end text-sm">
-                          <span className="mr-1 text-muted-foreground">DH</span>
-                          <span className={client.balance > 0 ? "text-destructive" : ""}>
-                            {client.balance.toFixed(2)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-right">
-                        {client._count.transactions}
-                      </td>
-                      <td className="p-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditDialog(client.id)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setDeleteDialog({
-                                isOpen: true,
-                                clientId: client.id,
-                                clientName: client.name,
-                              });
-                            }}
-                          >
-                            <Trash2Icon className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      )}
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <span className="line-clamp-2">{client.address}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Balance:</span>
+                        <span className={client.balance > 0 ? "text-destructive font-medium" : "font-medium"}>
+                          DH {client.balance.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Transactions:</span>
+                        <span>{client._count.transactions}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex justify-end gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditDialog(client.id)}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => {
+                        setDeleteDialog({
+                          isOpen: true,
+                          clientId: client.id,
+                          clientName: client.name,
+                        });
+                      }}
+                    >
+                      <Trash2Icon className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
-          </div>
+          ) : (
+            <div className="rounded-lg border bg-card">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4 w-8"></th>
+                      <th className="text-left p-4">Name</th>
+                      <th className="text-left p-4">Contact</th>
+                      <th className="text-left p-4">Address</th>
+                      <th className="text-right p-4">Balance</th>
+                      <th className="text-right p-4">Transactions</th>
+                      <th className="text-right p-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clients.map((client) => (
+                      <tr 
+                        key={client.id} 
+                        className="border-b hover:bg-muted/50"
+                      >
+                        <td className="p-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => toggleClientSelection(client.id)}
+                          >
+                            {selectedClients.includes(client.id) ? (
+                              <CheckSquare className="h-4 w-4" />
+                            ) : (
+                              <Square className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </td>
+                        <td className="p-4">{client.name}</td>
+                        <td className="p-4">
+                          <div className="flex items-center text-sm">
+                            <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                            <span>{client.phone}</span>
+                          </div>
+                        </td>
+                        <td className="p-4">{client.address}</td>
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end text-sm">
+                            <span className="mr-1 text-muted-foreground">DH</span>
+                            <span className={client.balance > 0 ? "text-destructive" : ""}>
+                              {client.balance.toFixed(2)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-right">
+                          {client._count.transactions}
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditDialog(client.id)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setDeleteDialog({
+                                  isOpen: true,
+                                  clientId: client.id,
+                                  clientName: client.name,
+                                });
+                              }}
+                            >
+                              <Trash2Icon className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Pagination */}
           <div className="mt-4 flex items-center justify-between">

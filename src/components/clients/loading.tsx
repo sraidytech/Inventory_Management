@@ -1,3 +1,5 @@
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+
 export function ClientFormSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
@@ -50,6 +52,51 @@ export function ClientFormSkeleton() {
         <div className="h-10 w-20 bg-muted rounded" />
         <div className="h-10 w-24 bg-muted rounded" />
       </div>
+    </div>
+  );
+}
+
+export function ClientsCardSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
+      {[...Array(8)].map((_, i) => (
+        <Card key={i} className="overflow-hidden">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <div className="h-5 w-32 bg-muted rounded" />
+              <div className="h-8 w-8 bg-muted rounded" />
+            </div>
+          </CardHeader>
+          <CardContent className="pb-2 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 bg-muted rounded-full" />
+              <div className="h-4 w-32 bg-muted rounded" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 bg-muted rounded-full" />
+              <div className="h-4 w-40 bg-muted rounded" />
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="h-4 w-4 bg-muted rounded-full" />
+              <div className="h-8 w-full bg-muted rounded" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 bg-muted rounded-full" />
+              <div className="h-4 w-16 bg-muted rounded" />
+              <div className="h-4 w-20 bg-muted rounded" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 bg-muted rounded-full" />
+              <div className="h-4 w-24 bg-muted rounded" />
+              <div className="h-4 w-8 bg-muted rounded" />
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-end gap-2 pt-2">
+            <div className="h-8 w-20 bg-muted rounded" />
+            <div className="h-8 w-24 bg-muted rounded" />
+          </CardFooter>
+        </Card>
+      ))}
     </div>
   );
 }
