@@ -41,8 +41,20 @@ export function useCategoriesAndSuppliers(): UseOptionsReturn {
           suppliersRes.json(),
         ]);
 
-        setCategories(categoriesData);
-        setSuppliers(suppliersData);
+        // Check if the response has the expected structure
+        if (categoriesData && categoriesData.categories) {
+          setCategories(categoriesData.categories);
+        } else {
+          console.error("Invalid categories data structure:", categoriesData);
+          setCategories([]);
+        }
+
+        if (suppliersData && suppliersData.suppliers) {
+          setSuppliers(suppliersData.suppliers);
+        } else {
+          console.error("Invalid suppliers data structure:", suppliersData);
+          setSuppliers([]);
+        }
       } catch (err) {
         setError(err instanceof Error ? err : new Error("An error occurred"));
       } finally {

@@ -264,11 +264,17 @@ export function ProductForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {categories.map((category: { id: string; name: string }) => (
+                  {Array.isArray(categories) && categories.length > 0 ? (
+                    categories.map((category: { id: string; name: string }) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
                       </SelectItem>
-                    ))}
+                    ))
+                  ) : (
+                    <SelectItem value="no-categories" disabled>
+                      No categories available
+                    </SelectItem>
+                  )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -294,11 +300,17 @@ export function ProductForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {suppliers.map((supplier: { id: string; name: string }) => (
-                      <SelectItem key={supplier.id} value={supplier.id}>
-                        {supplier.name}
+                    {Array.isArray(suppliers) && suppliers.length > 0 ? (
+                      suppliers.map((supplier: { id: string; name: string }) => (
+                        <SelectItem key={supplier.id} value={supplier.id}>
+                          {supplier.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-suppliers" disabled>
+                        No suppliers available
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
