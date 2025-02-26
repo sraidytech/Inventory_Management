@@ -15,13 +15,26 @@ export const productSchema = z.object({
 export const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
+  userId: z.string().min(1, "User ID is required"),
+});
+
+export const categoryFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
 });
 
 export const supplierSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().optional(),
-  address: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().min(1, "Phone is required"),
+  address: z.string().min(1, "Address is required"),
+  userId: z.string().min(1, "User ID is required"),
+});
+
+export const supplierFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  phone: z.string().min(1, "Phone is required"),
+  address: z.string().min(1, "Address is required"),
 });
 
 export const transactionSchema = z.object({

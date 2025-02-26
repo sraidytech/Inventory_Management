@@ -10,7 +10,8 @@ import {
   ShoppingCart,
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Tags
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -32,6 +33,12 @@ const routes = [
     icon: Package,
     href: "/inventory",
     color: "text-violet-500"
+  },
+  {
+    label: "Categories",
+    icon: Tags,
+    href: "/categories",
+    color: "text-green-500"
   },
   {
     label: "Suppliers",

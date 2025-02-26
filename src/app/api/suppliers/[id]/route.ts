@@ -1,13 +1,19 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { supplierSchema } from "@/lib/validations";
-import { withAuth, withValidation } from "@/lib/api-middleware";
+import { supplierFormSchema } from "@/lib/validations";
+import { withAuth, withValidation, RouteParams } from "@/lib/api-middleware";
 import { ApiError } from "@/lib/api-error";
+import type { Prisma } from "@prisma/client";
 
 // GET /api/suppliers/[id]
-export const GET = withAuth(async (req: NextRequest, params: Record<string, string>) => {
-  const supplier = await prisma.supplier.findUnique({
-    where: { id: params.id },
+export const GET = withAuth(async (req: NextRequest, params: RouteParams, userId: string) => {
+  const resolvedParams = await Promise.resolve(params.params);
+  
+  const supplier = await prisma.supplier.findFirst({
+    where: { 
+      id: resolvedParams.id,
+      userId 
+    },
     include: {
       _count: {
         select: { products: true },
@@ -24,29 +30,34 @@ export const GET = withAuth(async (req: NextRequest, params: Record<string, stri
 
 // PUT /api/suppliers/[id]
 export const PUT = withValidation(
-  supplierSchema,
-  async (req: NextRequest, params: Record<string, string>) => {
+  supplierFormSchema,
+  async (req: NextRequest, params: RouteParams, userId: string) => {
+    const resolvedParams = await Promise.resolve(params.params);
     const data = await req.json();
 
-    // Check if supplier exists
-    const existingSupplier = await prisma.supplier.findUnique({
-      where: { id: params.id },
+    // Check if supplier exists and belongs to user
+    const existingSupplier = await prisma.supplier.findFirst({
+      where: { 
+        id: resolvedParams.id,
+        userId 
+      },
     });
 
     if (!existingSupplier) {
       throw ApiError.NotFound("Supplier not found");
     }
 
-    // Check if new email already exists (if email is being changed)
-    if (data.email.toLowerCase() !== existingSupplier.email.toLowerCase()) {
+    // Only check email uniqueness if email is provided in the data
+    if (data.email && existingSupplier.email && data.email.toLowerCase() !== existingSupplier.email.toLowerCase()) {
       const emailExists = await prisma.supplier.findFirst({
         where: {
           email: {
             equals: data.email,
             mode: "insensitive" as const,
           },
+          userId,
           id: {
-            not: params.id,
+            not: resolvedParams.id,
           },
         },
       });
@@ -56,9 +67,25 @@ export const PUT = withValidation(
       }
     }
 
+    // Create update data with proper handling of optional email
+    const updateData: Prisma.SupplierUpdateInput = {
+      name: data.name,
+      phone: data.phone,
+      address: data.address,
+      userId, // Ensure userId is preserved
+    };
+
+    // Only include email if it exists in the data
+    if (data.email !== undefined) {
+      updateData.email = data.email || null;
+    }
+
     const updatedSupplier = await prisma.supplier.update({
-      where: { id: params.id },
-      data,
+      where: { 
+        id: resolvedParams.id,
+        userId
+      },
+      data: updateData,
       include: {
         _count: {
           select: { products: true },
@@ -72,10 +99,15 @@ export const PUT = withValidation(
 
 // DELETE /api/suppliers/[id]
 export const DELETE = withAuth(
-  async (req: NextRequest, params: Record<string, string>) => {
-    // Check if supplier exists
-    const supplier = await prisma.supplier.findUnique({
-      where: { id: params.id },
+  async (req: NextRequest, params: RouteParams, userId: string) => {
+    const resolvedParams = await Promise.resolve(params.params);
+    
+    // Check if supplier exists and belongs to user
+    const supplier = await prisma.supplier.findFirst({
+      where: { 
+        id: resolvedParams.id,
+        userId 
+      },
       include: {
         _count: {
           select: { products: true },
@@ -95,7 +127,10 @@ export const DELETE = withAuth(
     }
 
     await prisma.supplier.delete({
-      where: { id: params.id },
+      where: { 
+        id: resolvedParams.id,
+        userId 
+      },
     });
 
     return { message: "Supplier deleted successfully" };

@@ -42,7 +42,7 @@ model Category {
 model Supplier {
   id          String    @id @default(uuid())
   name        String
-  email       String
+  email       String?
   phone       String
   address     String
   products    Product[]
@@ -50,7 +50,7 @@ model Supplier {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  @@unique([email, userId])
+  @@unique([id, userId])
 }
 
 model Product {

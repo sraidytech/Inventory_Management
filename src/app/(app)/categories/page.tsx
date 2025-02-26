@@ -4,103 +4,102 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckSquare, Edit, Phone, PlusIcon, SearchIcon, Square, Trash2Icon } from "lucide-react";
+import { CheckSquare, Edit, PlusIcon, SearchIcon, Square, Trash2Icon } from "lucide-react";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { toast } from "sonner";
-import { BulkActions } from "@/components/suppliers/bulk-actions";
-import { SupplierForm } from "@/components/suppliers/supplier-form";
+import { BulkActions } from "@/components/categories/bulk-actions";
+import { CategoryForm } from "@/components/categories/category-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-interface Supplier {
+interface Category {
   id: string;
   name: string;
-  phone: string;
-  address: string;
+  description: string | null;
   _count: {
     products: number;
   };
 }
 
-export default function SuppliersPage() {
+export default function CategoriesPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [formDialog, setFormDialog] = useState<{
     isOpen: boolean;
-    supplierId: string | null;
-    supplierData: Partial<Supplier> | null;
+    categoryId: string | null;
+    categoryData: Partial<Category> | null;
   }>({
     isOpen: false,
-    supplierId: null,
-    supplierData: null,
+    categoryId: null,
+    categoryData: null,
   });
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
-    supplierId: string | null;
-    supplierName: string;
+    categoryId: string | null;
+    categoryName: string;
   }>({
     isOpen: false,
-    supplierId: null,
-    supplierName: "",
+    categoryId: null,
+    categoryName: "",
   });
   const limit = 10;
 
-  const toggleSupplierSelection = (supplierId: string) => {
-    setSelectedSuppliers((current) =>
-      current.includes(supplierId)
-        ? current.filter((id) => id !== supplierId)
-        : [...current, supplierId]
+  const toggleCategorySelection = (categoryId: string) => {
+    setSelectedCategories((current) =>
+      current.includes(categoryId)
+        ? current.filter((id) => id !== categoryId)
+        : [...current, categoryId]
     );
   };
 
-  const handleDelete = async (supplierId: string) => {
+  const handleDelete = async (categoryId: string) => {
     try {
-      const response = await fetch(`/api/suppliers/${supplierId}`, {
+      const response = await fetch(`/api/categories/${categoryId}`, {
         method: "DELETE",
         credentials: "include",
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to delete supplier");
+        throw new Error(error.error || "Failed to delete category");
       }
 
-      toast.success("Supplier deleted successfully");
-      fetchSuppliers();
+      toast.success("Category deleted successfully");
+      fetchCategories();
       router.refresh();
     } catch (error) {
-      console.error("Error deleting supplier:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete supplier");
+      console.error("Error deleting category:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete category");
     }
   };
 
-  const openEditDialog = async (supplierId: string) => {
+  const openEditDialog = async (categoryId: string) => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/suppliers/${supplierId}`);
-      if (!response.ok) throw new Error("Failed to fetch supplier");
+      const response = await fetch(`/api/categories/${categoryId}`);
+      if (!response.ok) throw new Error("Failed to fetch category");
       
       const data = await response.json();
       
       setFormDialog({
         isOpen: true,
-        supplierId,
-        supplierData: data.data,
+        categoryId,
+        categoryData: data.data,
       });
     } catch (error) {
-      console.error("Error fetching supplier:", error);
-      toast.error("Failed to load supplier data");
+      console.error("Error fetching category:", error);
+      toast.error("Failed to load category data");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Memoize fetchSuppliers to prevent infinite loop
-  const fetchSuppliers = useCallback(async () => {
+  // Memoize fetchCategories to prevent infinite loop
+  const fetchCategories = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams({
@@ -109,37 +108,37 @@ export default function SuppliersPage() {
         ...(search && { search }),
       });
 
-      const response = await fetch(`/api/suppliers?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch suppliers");
+      const response = await fetch(`/api/categories?${params}`);
+      if (!response.ok) throw new Error("Failed to fetch categories");
 
       const data = await response.json();
-      setSuppliers(data.suppliers);
+      setCategories(data.categories);
       setTotal(data.total);
     } catch (error) {
-      console.error("Error fetching suppliers:", error);
-      toast.error("Failed to load suppliers");
+      console.error("Error fetching categories:", error);
+      toast.error("Failed to load categories");
     } finally {
       setIsLoading(false);
     }
   }, [search, page]);
 
-  // Fetch suppliers when component mounts or search/page changes
+  // Fetch categories when component mounts or search/page changes
   useEffect(() => {
-    fetchSuppliers();
-  }, [fetchSuppliers]);
+    fetchCategories();
+  }, [fetchCategories]);
 
   return (
     <div className="container mx-auto py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Suppliers</h1>
+          <h1 className="text-2xl font-bold">Categories</h1>
           <p className="text-muted-foreground">
-            Manage your suppliers and vendor relationships
+            Manage your product categories
           </p>
         </div>
-        <Button onClick={() => setFormDialog({ isOpen: true, supplierId: null, supplierData: null })}>
+        <Button onClick={() => setFormDialog({ isOpen: true, categoryId: null, categoryData: null })}>
           <PlusIcon className="w-4 h-4 mr-2" />
-          Add Supplier
+          Add Category
         </Button>
       </div>
 
@@ -147,7 +146,7 @@ export default function SuppliersPage() {
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search suppliers..."
+            placeholder="Search categories..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
@@ -173,16 +172,15 @@ export default function SuppliersPage() {
                   <tr className="border-b">
                     <th className="text-left p-4 w-8"></th>
                     <th className="text-left p-4">Name</th>
-                    <th className="text-left p-4">Contact</th>
-                    <th className="text-left p-4">Address</th>
+                    <th className="text-left p-4">Description</th>
                     <th className="text-right p-4">Products</th>
                     <th className="text-right p-4">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {suppliers.map((supplier) => (
+                  {categories.map((category) => (
                     <tr 
-                      key={supplier.id} 
+                      key={category.id} 
                       className="border-b hover:bg-muted/50"
                     >
                       <td className="p-4">
@@ -190,32 +188,26 @@ export default function SuppliersPage() {
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
-                          onClick={() => toggleSupplierSelection(supplier.id)}
+                          onClick={() => toggleCategorySelection(category.id)}
                         >
-                          {selectedSuppliers.includes(supplier.id) ? (
+                          {selectedCategories.includes(category.id) ? (
                             <CheckSquare className="h-4 w-4" />
                           ) : (
                             <Square className="h-4 w-4" />
                           )}
                         </Button>
                       </td>
-                      <td className="p-4">{supplier.name}</td>
-                      <td className="p-4">
-                        <div className="flex items-center text-sm">
-                          <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>{supplier.phone}</span>
-                        </div>
-                      </td>
-                      <td className="p-4">{supplier.address}</td>
+                      <td className="p-4">{category.name}</td>
+                      <td className="p-4">{category.description || "-"}</td>
                       <td className="p-4 text-right">
-                        {supplier._count.products}
+                        {category._count.products}
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => openEditDialog(supplier.id)}
+                            onClick={() => openEditDialog(category.id)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -225,8 +217,8 @@ export default function SuppliersPage() {
                             onClick={() => {
                               setDeleteDialog({
                                 isOpen: true,
-                                supplierId: supplier.id,
-                                supplierName: supplier.name,
+                                categoryId: category.id,
+                                categoryName: category.name,
                               });
                             }}
                           >
@@ -244,7 +236,7 @@ export default function SuppliersPage() {
           {/* Pagination */}
           <div className="mt-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {suppliers.length} of {total} suppliers
+              Showing {categories.length} of {total} categories
             </p>
             <div className="flex gap-2">
               <Button
@@ -271,49 +263,48 @@ export default function SuppliersPage() {
       <DeleteDialog
         isOpen={deleteDialog.isOpen}
         onClose={() =>
-          setDeleteDialog({ isOpen: false, supplierId: null, supplierName: "" })
+          setDeleteDialog({ isOpen: false, categoryId: null, categoryName: "" })
         }
         onConfirm={async () => {
-          if (!deleteDialog.supplierId) return;
-          await handleDelete(deleteDialog.supplierId);
+          if (!deleteDialog.categoryId) return;
+          await handleDelete(deleteDialog.categoryId);
         }}
-        title="Delete Supplier"
-        description={`Are you sure you want to delete "${deleteDialog.supplierName}"? This action cannot be undone. Suppliers with associated products cannot be deleted.`}
+        title="Delete Category"
+        description={`Are you sure you want to delete "${deleteDialog.categoryName}"? This action cannot be undone. Categories with associated products cannot be deleted.`}
       />
 
       <Dialog 
         open={formDialog.isOpen} 
         onOpenChange={(open) => {
           if (!open) {
-            setFormDialog({ isOpen: false, supplierId: null, supplierData: null });
+            setFormDialog({ isOpen: false, categoryId: null, categoryData: null });
           }
         }}
       >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {formDialog.supplierId ? "Edit Supplier" : "Add Supplier"}
+              {formDialog.categoryId ? "Edit Category" : "Add Category"}
             </DialogTitle>
           </DialogHeader>
-          <SupplierForm 
-            initialData={formDialog.supplierData ? {
-              id: formDialog.supplierId || '',
-              name: formDialog.supplierData.name || '',
-              phone: formDialog.supplierData.phone || '',
-              address: formDialog.supplierData.address || '',
+          <CategoryForm 
+            initialData={formDialog.categoryData ? {
+              id: formDialog.categoryId || '',
+              name: formDialog.categoryData.name || '',
+              description: formDialog.categoryData.description || '',
             } : undefined}
             onSuccess={() => {
-              setFormDialog({ isOpen: false, supplierId: null, supplierData: null });
-              fetchSuppliers();
+              setFormDialog({ isOpen: false, categoryId: null, categoryData: null });
+              fetchCategories();
             }}
           />
         </DialogContent>
       </Dialog>
 
       <BulkActions
-        selectedSuppliers={selectedSuppliers}
-        onClearSelection={() => setSelectedSuppliers([])}
-        onSuppliersDeleted={fetchSuppliers}
+        selectedCategories={selectedCategories}
+        onClearSelection={() => setSelectedCategories([])}
+        onCategoriesDeleted={fetchCategories}
       />
     </div>
   );
