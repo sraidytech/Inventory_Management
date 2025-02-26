@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -23,6 +23,9 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Log the initialData to see what's being passed to the form
+  console.log("Client Form initialData:", initialData);
+
   const form = useForm<ClientFormData>({
     resolver: zodResolver(clientFormSchema),
     defaultValues: initialData || {
@@ -35,6 +38,14 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
       amountPaid: 0,
     },
   });
+
+  // Force reset the form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      console.log("Resetting form with initialData:", initialData);
+      form.reset(initialData);
+    }
+  }, [initialData, form]);
 
   // Calculate balance whenever totalDue or amountPaid changes
   const totalDue = form.watch("totalDue") || 0;
@@ -170,18 +181,22 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Total Due</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    min="0"
-                    placeholder="0.00" 
-                    {...field}
-                    onChange={(e) => {
-                      const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
-                      field.onChange(value);
-                    }}
-                    value={field.value === undefined ? "" : field.value}
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">DH</span>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      min="0"
+                      placeholder="0.00" 
+                      className="pl-9"
+                      {...field}
+                      onChange={(e) => {
+                        const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
+                        field.onChange(value);
+                      }}
+                      value={field.value === undefined ? "" : field.value}
+                    />
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -195,30 +210,39 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Amount Paid</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    min="0"
-                    placeholder="0.00" 
-                    {...field}
-                    onChange={(e) => {
-                      const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
-                      field.onChange(value);
-                    }}
-                    value={field.value === undefined ? "" : field.value}
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">DH</span>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      min="0"
+                      placeholder="0.00" 
+                      className="pl-9"
+                      {...field}
+                      onChange={(e) => {
+                        const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
+                        field.onChange(value);
+                      }}
+                      value={field.value === undefined ? "" : field.value}
+                    />
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <div className="flex flex-col">
+          <FormItem>
             <FormLabel>Balance</FormLabel>
-            <div className="h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background">
-              {balance.toFixed(2)}
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">DH</span>
+              <div className="h-10 px-9 py-2 rounded-md border border-input bg-background text-sm ring-offset-background flex items-center">
+                <span className={balance > 0 ? "text-destructive" : ""}>
+                  {balance.toFixed(2)}
+                </span>
+              </div>
             </div>
-          </div>
+          </FormItem>
         </div>
 
         <div className="flex justify-end gap-2">

@@ -4,12 +4,12 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckSquare, Edit, Phone, PlusIcon, SearchIcon, Square, Trash2Icon, DollarSign } from "lucide-react";
+import { CheckSquare, Edit, Phone, PlusIcon, SearchIcon, Square, Trash2Icon } from "lucide-react";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { toast } from "sonner";
 import { BulkActions } from "@/components/clients/bulk-actions";
 import { ClientForm } from "@/components/clients/client-form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ClientsTableSkeleton } from "@/components/clients/loading";
 
 interface Client {
@@ -90,13 +90,32 @@ export default function ClientsPage() {
       const response = await fetch(`/api/clients/${clientId}`);
       if (!response.ok) throw new Error("Failed to fetch client");
       
-      const data = await response.json();
+      const client = await response.json();
+      console.log("Fetched client data:", client);
       
-      setFormDialog({
-        isOpen: true,
-        clientId,
-        clientData: data,
-      });
+      // Use the client data from the table if the API returns empty values
+      const clientToEdit = clients.find(c => c.id === clientId);
+      console.log("Client from table:", clientToEdit);
+      
+      if (clientToEdit) {
+        setFormDialog({
+          isOpen: true,
+          clientId,
+          clientData: {
+            id: clientId,
+            name: clientToEdit.name,
+            email: clientToEdit.email || "",
+            phone: clientToEdit.phone,
+            address: clientToEdit.address,
+            notes: clientToEdit.notes || "",
+            totalDue: clientToEdit.totalDue,
+            amountPaid: clientToEdit.amountPaid,
+            balance: clientToEdit.balance,
+          },
+        });
+      } else {
+        toast.error("Client data not found");
+      }
     } catch (error) {
       console.error("Error fetching client:", error);
       toast.error("Failed to load client data");
@@ -209,7 +228,7 @@ export default function ClientsPage() {
                       <td className="p-4">{client.address}</td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end text-sm">
-                          <DollarSign className="h-4 w-4 mr-1 text-muted-foreground" />
+                          <span className="mr-1 text-muted-foreground">DH</span>
                           <span className={client.balance > 0 ? "text-destructive" : ""}>
                             {client.balance.toFixed(2)}
                           </span>
@@ -302,6 +321,11 @@ export default function ClientsPage() {
             <DialogTitle>
               {formDialog.clientId ? "Edit Client" : "Add Client"}
             </DialogTitle>
+            <DialogDescription>
+              {formDialog.clientId 
+                ? "Update client information and financial details" 
+                : "Add a new client to your system"}
+            </DialogDescription>
           </DialogHeader>
           <ClientForm 
             initialData={formDialog.clientData ? {
@@ -313,7 +337,7 @@ export default function ClientsPage() {
               notes: formDialog.clientData.notes || '',
               totalDue: formDialog.clientData.totalDue || 0,
               amountPaid: formDialog.clientData.amountPaid || 0,
-              balance: formDialog.clientData.balance,
+              balance: formDialog.clientData.balance || 0,
             } : undefined}
             onSuccess={() => {
               setFormDialog({ isOpen: false, clientId: null, clientData: null });
