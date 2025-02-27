@@ -97,8 +97,21 @@ export default function InventoryPage() {
       if (!response.ok) throw new Error("Failed to fetch products");
 
       const data = await response.json();
-      setProducts(data.products);
-      setTotal(data.total);
+      console.log("Products API response:", data);
+      
+      // Handle both old and new API response formats
+      if (data.success && data.data && data.data.items) {
+        // New format: { success: true, data: { items: [...], metadata: {...} } }
+        setProducts(data.data.items);
+        setTotal(data.data.metadata.total);
+      } else if (data.products) {
+        // Old format: { products: [...], total: number, pages: number }
+        setProducts(data.products);
+        setTotal(data.total);
+      } else {
+        console.error("Unexpected products data structure:", data);
+        toast.error("Failed to load products: Unexpected data format");
+      }
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {

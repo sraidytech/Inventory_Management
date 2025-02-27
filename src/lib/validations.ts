@@ -93,6 +93,7 @@ export const transactionFormSchema = z.object({
     price: z.number().min(0, "Price must be positive"),
     productId: z.string().min(1, "Product ID is required"),
   })).min(1, "At least one item is required"),
+  userId: z.string().optional(), // Make userId optional for form validation
 });
 
 export const userSettingsSchema = z.object({

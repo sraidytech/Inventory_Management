@@ -51,9 +51,16 @@ export async function GET(req: Request) {
     ]);
 
     return NextResponse.json({
-      clients,
-      total,
-      pages: Math.ceil(total / limit),
+      success: true,
+      data: {
+        items: clients,
+        metadata: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        }
+      }
     });
   } catch (error) {
     console.error("Error fetching clients:", error);

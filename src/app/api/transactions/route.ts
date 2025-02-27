@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { transactionSchema } from "@/lib/validations";
+import { transactionFormSchema } from "@/lib/validations";
 import { withAuth, withValidation } from "@/lib/api-middleware";
 import { ApiError } from "@/lib/api-error";
 import { Prisma, TransactionType, TransactionStatus, PaymentMethod } from "@prisma/client";
@@ -81,7 +81,7 @@ export const GET = withAuth(async (req: NextRequest) => {
 
 // POST /api/transactions
 export const POST = withValidation(
-  transactionSchema,
+  transactionFormSchema,
   async (req: NextRequest, _, userId) => {
     const data = await req.json() as CreateTransactionData;
 

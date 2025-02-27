@@ -178,9 +178,16 @@ export async function GET(req: Request) {
     ]);
 
     return NextResponse.json({
-      products,
-      total,
-      pages: Math.ceil(total / limit),
+      success: true,
+      data: {
+        items: products,
+        metadata: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        }
+      }
     });
   } catch (error) {
     console.error('Error:', error);

@@ -140,8 +140,21 @@ export default function ClientsPage() {
       if (!response.ok) throw new Error("Failed to fetch clients");
 
       const data = await response.json();
-      setClients(data.clients);
-      setTotal(data.total);
+      console.log("Clients API response:", data);
+      
+      // Handle both old and new API response formats
+      if (data.success && data.data && data.data.items) {
+        // New format: { success: true, data: { items: [...], metadata: {...} } }
+        setClients(data.data.items);
+        setTotal(data.data.metadata.total);
+      } else if (data.clients) {
+        // Old format: { clients: [...], total: number, pages: number }
+        setClients(data.clients);
+        setTotal(data.total);
+      } else {
+        console.error("Unexpected clients data structure:", data);
+        toast.error("Failed to load clients: Unexpected data format");
+      }
     } catch (error) {
       console.error("Error fetching clients:", error);
       toast.error("Failed to load clients");

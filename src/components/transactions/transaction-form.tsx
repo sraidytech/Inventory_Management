@@ -80,7 +80,16 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
         const response = await fetch("/api/products");
         if (!response.ok) throw new Error("Failed to fetch products");
         const data = await response.json();
-        setProducts(data.data.items);
+        
+        console.log("Products API response:", data);
+        
+        // The API now returns { success: true, data: { items: [...], metadata: {...} } }
+        if (data.success && data.data && data.data.items && Array.isArray(data.data.items)) {
+          setProducts(data.data.items);
+        } else {
+          console.error("Unexpected products data structure:", data);
+          toast.error("Failed to load products: Unexpected data format");
+        }
       } catch (error) {
         console.error("Error fetching products:", error);
         toast.error("Failed to load products");
@@ -98,7 +107,16 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
           const response = await fetch("/api/clients");
           if (!response.ok) throw new Error("Failed to fetch clients");
           const data = await response.json();
-          setClients(data.data.clients);
+          
+          console.log("Clients API response:", data);
+          
+          // The API now returns { success: true, data: { items: [...], metadata: {...} } }
+          if (data.success && data.data && data.data.items && Array.isArray(data.data.items)) {
+            setClients(data.data.items);
+          } else {
+            console.error("Unexpected clients data structure:", data);
+            toast.error("Failed to load clients: Unexpected data format");
+          }
         } catch (error) {
           console.error("Error fetching clients:", error);
           toast.error("Failed to load clients");
@@ -112,6 +130,49 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
   const onSubmit = async (data: TransactionFormData) => {
     setIsLoading(true);
     try {
+      // Validate required fields based on transaction type
+      if (type === "SALE" && !data.clientId) {
+        toast.error("Client is required for sale transactions");
+        setIsLoading(false);
+        return;
+      }
+      
+      if (type === "PURCHASE" && !data.supplierId) {
+        toast.error("Supplier is required for purchase transactions");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Validate items
+      if (!data.items || data.items.length === 0) {
+        toast.error("At least one item is required");
+        setIsLoading(false);
+        return;
+      }
+      
+      for (const item of data.items) {
+        if (!item.productId) {
+          toast.error("Product is required for all items");
+          setIsLoading(false);
+          return;
+        }
+        if (!item.quantity || item.quantity <= 0) {
+          toast.error("Quantity must be positive for all items");
+          setIsLoading(false);
+          return;
+        }
+        if (item.price < 0) {
+          toast.error("Price must be non-negative for all items");
+          setIsLoading(false);
+          return;
+        }
+      }
+      
+      console.log("Submitting transaction data:", {
+        ...data,
+        remainingAmount: total - data.amountPaid,
+      });
+      
       const response = await fetch("/api/transactions", {
         method: "POST",
         headers: {
@@ -124,8 +185,9 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create transaction");
+        const errorData = await response.json();
+        console.error("Transaction API error response:", errorData);
+        throw new Error(errorData.error || "Failed to create transaction");
       }
 
       toast.success(`${type === "PURCHASE" ? "Purchase" : "Sale"} recorded successfully`);
