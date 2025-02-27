@@ -96,6 +96,25 @@ export const transactionFormSchema = z.object({
   userId: z.string().optional(), // Make userId optional for form validation
 });
 
+export const paymentSchema = z.object({
+  amount: z.number().min(0.01, "Amount must be greater than zero"),
+  paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK"]),
+  reference: z.string().optional(),
+  notes: z.string().optional(),
+  status: z.enum(["COMPLETED", "PENDING", "FAILED"]).default("COMPLETED"),
+  transactionId: z.string().min(1, "Transaction ID is required"),
+  clientId: z.string().optional(),
+  userId: z.string().min(1, "User ID is required"),
+});
+
+export const paymentFormSchema = z.object({
+  amount: z.number().min(0.01, "Amount must be greater than zero"),
+  paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK"]),
+  reference: z.string().optional(),
+  notes: z.string().optional(),
+  transactionId: z.string().min(1, "Transaction ID is required"),
+});
+
 export const userSettingsSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
   language: z.enum(["en", "ar"]).default("en"),
@@ -108,4 +127,5 @@ export type CategoryInput = z.infer<typeof categorySchema>;
 export type SupplierInput = z.infer<typeof supplierSchema>;
 export type ClientInput = z.infer<typeof clientSchema>;
 export type TransactionInput = z.infer<typeof transactionSchema>;
+export type PaymentInput = z.infer<typeof paymentSchema>;
 export type UserSettingsInput = z.infer<typeof userSettingsSchema>;

@@ -28,6 +28,12 @@ enum PaymentMethod {
   CHECK
 }
 
+enum PaymentStatus {
+  COMPLETED
+  PENDING
+  FAILED
+}
+
 enum Unit {
   KG
   PIECE
@@ -72,6 +78,7 @@ model Client {
   balance     Float         @default(0)
   userId      String
   transactions Transaction[] @relation("ClientTransactions")
+  payments    Payment[]     @relation("ClientPayments")
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -116,6 +123,7 @@ model Transaction {
   supplierId      String?
   supplier        Supplier?         @relation("SupplierTransactions", fields: [supplierId], references: [id])
   items           TransactionItem[]
+  payments        Payment[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 }
@@ -130,6 +138,22 @@ model TransactionItem {
   price         Float
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  amount          Float
+  paymentMethod   PaymentMethod
+  reference       String?       // For check number or bank transfer reference
+  notes           String?
+  status          PaymentStatus @default(COMPLETED)
+  transaction     Transaction   @relation(fields: [transactionId], references: [id])
+  transactionId   String
+  client          Client?       @relation("ClientPayments", fields: [clientId], references: [id])
+  clientId        String?
+  userId          String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
 
 model UserSettings {

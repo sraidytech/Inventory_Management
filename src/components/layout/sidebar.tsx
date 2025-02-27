@@ -25,7 +25,8 @@ import {
   Tags,
   UserCircle,
   ArrowDownRight,
-  ArrowUpRight
+  ArrowUpRight,
+  DollarSign
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -91,6 +92,12 @@ const routes: RouteItem[] = [
         color: "text-green-500"
       }
     ]
+  },
+  {
+    label: "Finance",
+    icon: DollarSign,
+    href: "/finance",
+    color: "text-emerald-500"
   },
   {
     label: "Settings",

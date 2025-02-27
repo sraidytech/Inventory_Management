@@ -6,10 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ArrowUpRight, ArrowDownRight, Calendar, User, DollarSign, CreditCard, FileText } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Calendar, User, DollarSign, CreditCard, FileText, CreditCard as CreditCardIcon } from "lucide-react";
+import { PaymentHistory } from "@/components/payments/payment-history";
 
 interface Product {
   id: string;
@@ -56,14 +54,21 @@ interface TransactionDetailsProps {
 export function TransactionDetails({ transaction, onClose }: TransactionDetailsProps) {
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<string | undefined>(
-    transaction.paymentMethod || undefined
-  );
-  const [amountPaid, setAmountPaid] = useState<number>(transaction.amountPaid);
-  const [reference, setReference] = useState<string | undefined>(
-    transaction.reference || undefined
-  );
+  const [transactionData, setTransactionData] = useState(transaction);
+
+  // Refresh transaction data when payments are updated
+  const refreshTransactionData = async () => {
+    try {
+      const response = await fetch(`/api/transactions/${transaction.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to refresh transaction data");
+      }
+      const data = await response.json();
+      setTransactionData(data);
+    } catch (error) {
+      console.error("Error refreshing transaction data:", error);
+    }
+  };
 
   const handleStatusChange = async (status: string) => {
     if (transaction.status === status) return;
@@ -89,38 +94,6 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
     } catch (error) {
       console.error("Error updating transaction status:", error);
       toast.error(error instanceof Error ? error.message : "Failed to update transaction status");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handlePaymentUpdate = async () => {
-    setIsUpdating(true);
-    try {
-      const response = await fetch(`/api/transactions/${transaction.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: transaction.status,
-          amountPaid,
-          paymentMethod,
-          reference,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update payment");
-      }
-
-      toast.success("Payment updated successfully");
-      router.refresh();
-      onClose();
-    } catch (error) {
-      console.error("Error updating payment:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to update payment");
     } finally {
       setIsUpdating(false);
     }
@@ -217,12 +190,12 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Paid: DH {transaction.amountPaid.toFixed(2)}</span>
+                  <span className="text-sm">Paid: DH {transactionData.amountPaid.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className={`text-sm ${transaction.remainingAmount > 0 ? "text-destructive" : ""}`}>
-                    Remaining: DH {transaction.remainingAmount.toFixed(2)}
+                  <span className={`text-sm ${transactionData.remainingAmount > 0 ? "text-destructive" : ""}`}>
+                    Remaining: DH {transactionData.remainingAmount.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -294,9 +267,27 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
             </Card>
           )}
 
+          {/* Payment History */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CreditCardIcon className="h-4 w-4" />
+                Payment Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PaymentHistory
+                transactionId={transaction.id}
+                clientId={transaction.client?.id}
+                remainingAmount={transactionData.remainingAmount}
+                onPaymentUpdate={refreshTransactionData}
+              />
+            </CardContent>
+          </Card>
+
           {/* Actions */}
           <div className="space-y-4">
-            {transaction.status === "PENDING" && (
+            {transactionData.status === "PENDING" && (
               <div className="flex flex-col space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Update Status</span>
@@ -320,79 +311,6 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
                     </Button>
                   </div>
                 </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Update Payment</span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowPaymentForm(!showPaymentForm)}
-                  >
-                    {showPaymentForm ? "Hide Payment Form" : "Update Payment"}
-                  </Button>
-                </div>
-
-                {showPaymentForm && (
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="amountPaid">Amount Paid</Label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">DH</span>
-                            <Input
-                              id="amountPaid"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              placeholder="0.00"
-                              className="pl-9"
-                              value={amountPaid}
-                              onChange={(e) => setAmountPaid(parseFloat(e.target.value) || 0)}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="paymentMethod">Payment Method</Label>
-                          <Select
-                            value={paymentMethod}
-                            onValueChange={setPaymentMethod}
-                          >
-                            <SelectTrigger id="paymentMethod">
-                              <SelectValue placeholder="Select payment method" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="CASH">Cash</SelectItem>
-                              <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
-                              <SelectItem value="CHECK">Check</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="reference">Reference (Optional)</Label>
-                          <Input
-                            id="reference"
-                            placeholder="Check number or transfer reference"
-                            value={reference || ""}
-                            onChange={(e) => setReference(e.target.value)}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end mt-4">
-                        <Button
-                          size="sm"
-                          onClick={handlePaymentUpdate}
-                          disabled={isUpdating}
-                        >
-                          {isUpdating ? "Updating..." : "Update Payment"}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
               </div>
             )}
           </div>
