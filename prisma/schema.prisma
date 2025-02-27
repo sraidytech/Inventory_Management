@@ -22,6 +22,12 @@ enum TransactionStatus {
   CANCELLED
 }
 
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CHECK
+}
+
 enum Unit {
   KG
   PIECE
@@ -40,15 +46,16 @@ model Category {
 }
 
 model Supplier {
-  id          String    @id @default(uuid())
-  name        String
-  email       String?
-  phone       String
-  address     String
-  products    Product[]
-  userId      String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String         @id @default(uuid())
+  name         String
+  email        String?
+  phone        String
+  address      String
+  products     Product[]
+  transactions Transaction[]  @relation("SupplierTransactions")
+  userId       String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   @@unique([id, userId])
 }
@@ -94,17 +101,23 @@ model Product {
 }
 
 model Transaction {
-  id        String            @id @default(uuid())
-  type      TransactionType
-  status    TransactionStatus @default(PENDING)
-  total     Float
-  notes     String?
-  userId    String
-  clientId  String?
-  client    Client?           @relation("ClientTransactions", fields: [clientId], references: [id])
-  items     TransactionItem[]
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  id              String            @id @default(uuid())
+  type            TransactionType
+  status          TransactionStatus @default(PENDING)
+  total           Float
+  amountPaid      Float             @default(0)
+  remainingAmount Float             @default(0)
+  paymentMethod   PaymentMethod?
+  reference       String?           // For check number or bank transfer reference
+  notes           String?
+  userId          String
+  clientId        String?
+  client          Client?           @relation("ClientTransactions", fields: [clientId], references: [id])
+  supplierId      String?
+  supplier        Supplier?         @relation("SupplierTransactions", fields: [supplierId], references: [id])
+  items           TransactionItem[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 }
 
 model TransactionItem {

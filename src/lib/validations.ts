@@ -63,13 +63,36 @@ export const transactionSchema = z.object({
   type: z.enum(["PURCHASE", "SALE", "ADJUSTMENT"]),
   status: z.enum(["PENDING", "COMPLETED", "CANCELLED"]).optional(),
   total: z.number().min(0, "Total must be positive"),
+  amountPaid: z.number().min(0, "Amount paid must be positive").optional(),
+  remainingAmount: z.number().min(0, "Remaining amount must be positive").optional(),
+  paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK"]).optional(),
+  reference: z.string().optional(),
   notes: z.string().optional(),
   userId: z.string().min(1, "User ID is required"),
+  clientId: z.string().optional(),
+  supplierId: z.string().optional(),
   items: z.array(z.object({
     quantity: z.number().min(1, "Quantity must be positive"),
     price: z.number().min(0, "Price must be positive"),
     productId: z.string().min(1, "Product ID is required"),
   })),
+});
+
+export const transactionFormSchema = z.object({
+  type: z.enum(["PURCHASE", "SALE", "ADJUSTMENT"]),
+  status: z.enum(["PENDING", "COMPLETED", "CANCELLED"]).default("PENDING"),
+  total: z.number().min(0, "Total must be positive"),
+  amountPaid: z.number().min(0, "Amount paid must be positive").default(0),
+  paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK"]).optional(),
+  reference: z.string().optional(),
+  notes: z.string().optional(),
+  clientId: z.string().optional(),
+  supplierId: z.string().optional(),
+  items: z.array(z.object({
+    quantity: z.number().min(1, "Quantity must be positive"),
+    price: z.number().min(0, "Price must be positive"),
+    productId: z.string().min(1, "Product ID is required"),
+  })).min(1, "At least one item is required"),
 });
 
 export const userSettingsSchema = z.object({

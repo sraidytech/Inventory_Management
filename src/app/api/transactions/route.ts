@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { transactionSchema } from "@/lib/validations";
 import { withAuth, withValidation } from "@/lib/api-middleware";
 import { ApiError } from "@/lib/api-error";
-import { Prisma, TransactionType, TransactionStatus } from "@prisma/client";
+import { Prisma, TransactionType, TransactionStatus, PaymentMethod } from "@prisma/client";
 
 interface TransactionItem {
   productId: string;
@@ -15,7 +15,13 @@ interface CreateTransactionData {
   type: TransactionType;
   status: TransactionStatus;
   total: number;
+  amountPaid?: number;
+  remainingAmount?: number;
+  paymentMethod?: string;
+  reference?: string;
   notes?: string;
+  clientId?: string;
+  supplierId?: string;
   items: TransactionItem[];
 }
 
@@ -79,6 +85,10 @@ export const POST = withValidation(
   async (req: NextRequest, _, userId) => {
     const data = await req.json() as CreateTransactionData;
 
+    // Set default values
+    const amountPaid = data.amountPaid || 0;
+    const remainingAmount = data.total - amountPaid;
+
     // Validate all products exist and have sufficient stock for SALE transactions
     const productIds = data.items.map((item) => item.productId);
     const products = await prisma.product.findMany({
@@ -102,6 +112,16 @@ export const POST = withValidation(
       if (insufficientStock) {
         throw ApiError.BadRequest("Insufficient stock for one or more products");
       }
+
+      // For SALE transactions, clientId is required
+      if (!data.clientId) {
+        throw ApiError.BadRequest("Client is required for sale transactions");
+      }
+    } else if (data.type === "PURCHASE") {
+      // For PURCHASE transactions, supplierId is required
+      if (!data.supplierId) {
+        throw ApiError.BadRequest("Supplier is required for purchase transactions");
+      }
     }
 
     // Create transaction and update product quantities in a transaction
@@ -112,8 +132,14 @@ export const POST = withValidation(
           type: data.type,
           status: data.status,
           total: data.total,
+          amountPaid: amountPaid,
+          remainingAmount: remainingAmount,
+          paymentMethod: data.paymentMethod as PaymentMethod | undefined,
+          reference: data.reference,
           notes: data.notes,
-          userId: userId,
+          userId,
+          clientId: data.clientId,
+          supplierId: data.supplierId,
           items: {
             create: data.items,
           },
@@ -129,6 +155,7 @@ export const POST = withValidation(
               },
             },
           },
+          client: true,
         },
       });
 
@@ -142,6 +169,18 @@ export const POST = withValidation(
             quantity: {
               increment: quantityChange,
             },
+          },
+        });
+      }
+
+      // Update client credit for sales transactions
+      if (data.type === "SALE" && data.clientId) {
+        await tx.client.update({
+          where: { id: data.clientId },
+          data: {
+            totalDue: { increment: data.total },
+            amountPaid: { increment: amountPaid },
+            balance: { increment: remainingAmount },
           },
         });
       }

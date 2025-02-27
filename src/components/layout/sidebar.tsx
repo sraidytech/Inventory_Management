@@ -1,8 +1,18 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { LucideIcon } from "lucide-react"
+
+interface RouteItem {
+  label: string;
+  icon: LucideIcon;
+  href: string;
+  color: string;
+  subRoutes?: RouteItem[];
+}
 import { 
   LayoutDashboard, 
   Package, 
@@ -11,8 +21,11 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Tags,
-  UserCircle
+  UserCircle,
+  ArrowDownRight,
+  ArrowUpRight
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,7 +35,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip"
 
-const routes = [
+const routes: RouteItem[] = [
   {
     label: "Dashboard",
     icon: LayoutDashboard,
@@ -57,7 +70,27 @@ const routes = [
     label: "Transactions",
     icon: ShoppingCart,
     href: "/transactions",
-    color: "text-orange-500"
+    color: "text-orange-500",
+    subRoutes: [
+      {
+        label: "All Transactions",
+        icon: ShoppingCart,
+        href: "/transactions",
+        color: "text-orange-500"
+      },
+      {
+        label: "Record Purchase",
+        icon: ArrowDownRight,
+        href: "/transactions/purchase",
+        color: "text-blue-500"
+      },
+      {
+        label: "Record Sale",
+        icon: ArrowUpRight,
+        href: "/transactions/sale",
+        color: "text-green-500"
+      }
+    ]
   },
   {
     label: "Settings",
@@ -74,7 +107,20 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
+  const [expandedRoutes, setExpandedRoutes] = useState<string[]>([]);
+
+  const toggleExpand = (label: string) => {
+    setExpandedRoutes((prev: string[]) => 
+      prev.includes(label) 
+        ? prev.filter((item: string) => item !== label) 
+        : [...prev, label]
+    );
+  };
+
+  const isRouteActive = (href: string) => {
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -109,40 +155,113 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
           <nav>
             <ul className="space-y-1" role="list">
               {routes.map((route) => (
-                <li key={route.href}>
-                  <TooltipRoot>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={route.href}
-                        className={cn(
-                          "text-sm group flex p-3 w-full font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200",
-                          pathname === route.href ? "text-white bg-white/10" : "text-zinc-400",
-                          isCollapsed ? "justify-center px-2" : "justify-start px-3"
+                <li key={route.href + route.label}>
+                  {route.subRoutes ? (
+                    <div className="space-y-1">
+                      <TooltipRoot>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => toggleExpand(route.label)}
+                            className={cn(
+                              "text-sm group flex p-3 w-full font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200",
+                              isRouteActive(route.href) ? "text-white bg-white/10" : "text-zinc-400",
+                              isCollapsed ? "justify-center px-2" : "justify-start px-3"
+                            )}
+                            aria-expanded={expandedRoutes.includes(route.label)}
+                          >
+                            <div className={cn(
+                              "flex items-center",
+                              isCollapsed ? "justify-center" : "justify-start w-full"
+                            )}>
+                              <route.icon 
+                                className={cn("h-5 w-5 transition-all duration-300", route.color)} 
+                                aria-hidden="true"
+                              />
+                              {!isCollapsed && (
+                                <>
+                                  <span className="ml-3 flex-1 transition-all duration-300">
+                                    {route.label}
+                                  </span>
+                                  <ChevronDown 
+                                    className={cn(
+                                      "h-4 w-4 transition-transform duration-200",
+                                      expandedRoutes.includes(route.label) ? "transform rotate-180" : ""
+                                    )} 
+                                  />
+                                </>
+                              )}
+                            </div>
+                          </button>
+                        </TooltipTrigger>
+                        {isCollapsed && !isMobile && (
+                          <TooltipContent side="right">
+                            {route.label}
+                          </TooltipContent>
                         )}
-                        aria-current={pathname === route.href ? "page" : undefined}
-                      >
-                        <div className={cn(
-                          "flex items-center",
-                          isCollapsed ? "justify-center" : "justify-start w-full"
-                        )}>
-                          <route.icon 
-                            className={cn("h-5 w-5 transition-all duration-300", route.color)} 
-                            aria-hidden="true"
-                          />
-                          {!isCollapsed && (
-                            <span className="ml-3 transition-all duration-300">
-                              {route.label}
-                            </span>
+                      </TooltipRoot>
+                      
+                      {(!isCollapsed || (isCollapsed && isMobile)) && expandedRoutes.includes(route.label) && (
+                        <ul className="mt-1 pl-4 space-y-1">
+                          {route.subRoutes.map((subRoute) => (
+                            <li key={subRoute.href}>
+                              <Link
+                                href={subRoute.href}
+                                className={cn(
+                                  "text-sm group flex p-2 w-full font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200",
+                                  pathname === subRoute.href ? "text-white bg-white/10" : "text-zinc-400",
+                                )}
+                                aria-current={pathname === subRoute.href ? "page" : undefined}
+                              >
+                                <div className="flex items-center">
+                                  <subRoute.icon 
+                                    className={cn("h-4 w-4", subRoute.color)} 
+                                    aria-hidden="true"
+                                  />
+                                  <span className="ml-3">
+                                    {subRoute.label}
+                                  </span>
+                                </div>
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ) : (
+                    <TooltipRoot>
+                      <TooltipTrigger asChild>
+                        <Link
+                          href={route.href}
+                          className={cn(
+                            "text-sm group flex p-3 w-full font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200",
+                            pathname === route.href ? "text-white bg-white/10" : "text-zinc-400",
+                            isCollapsed ? "justify-center px-2" : "justify-start px-3"
                           )}
-                        </div>
-                      </Link>
-                    </TooltipTrigger>
-                    {isCollapsed && !isMobile && (
-                      <TooltipContent side="right">
-                        {route.label}
-                      </TooltipContent>
-                    )}
-                  </TooltipRoot>
+                          aria-current={pathname === route.href ? "page" : undefined}
+                        >
+                          <div className={cn(
+                            "flex items-center",
+                            isCollapsed ? "justify-center" : "justify-start w-full"
+                          )}>
+                            <route.icon 
+                              className={cn("h-5 w-5 transition-all duration-300", route.color)} 
+                              aria-hidden="true"
+                            />
+                            {!isCollapsed && (
+                              <span className="ml-3 transition-all duration-300">
+                                {route.label}
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+                      </TooltipTrigger>
+                      {isCollapsed && !isMobile && (
+                        <TooltipContent side="right">
+                          {route.label}
+                        </TooltipContent>
+                      )}
+                    </TooltipRoot>
+                  )}
                 </li>
               ))}
             </ul>
