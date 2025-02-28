@@ -308,8 +308,8 @@ export function TransactionsClient() {
                       </td>
                       <td className="px-6 py-4">
                         {transaction.type === "PURCHASE" 
-                          ? transaction.supplier?.name || "N/A"
-                          : transaction.client?.name || "N/A"}
+                          ? (transaction.supplier ? transaction.supplier.name : "N/A")
+                          : (transaction.client ? transaction.client.name : "N/A")}
                       </td>
                       <td className="px-6 py-4">{transaction.items.length}</td>
                       <td className="px-6 py-4 font-medium">

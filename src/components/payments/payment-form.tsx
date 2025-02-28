@@ -74,21 +74,48 @@ export function PaymentForm({ transactionId, clientId, remainingAmount, payment,
       // Add clientId to the data if provided
       const paymentData = clientId ? { ...data, clientId } : data;
       
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(paymentData),
-      });
+      console.log("Sending payment data:", paymentData);
+      
+      // Use a try-catch block specifically for the fetch operation
+      try {
+        const response = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(paymentData),
+          cache: "no-store",
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to ${isEditing ? 'update' : 'create'} payment`);
+        let responseData;
+        const responseText = await response.text();
+        console.log("Response text:", responseText);
+        
+        try {
+          // Try to parse the response as JSON
+          responseData = JSON.parse(responseText);
+          console.log("Parsed response data:", responseData);
+        } catch (parseError) {
+          console.error("Error parsing response:", parseError);
+          // If we can't parse as JSON, use the raw text
+          responseData = { success: false, error: responseText || "Unknown error" };
+        }
+
+        if (!response.ok || (responseData && !responseData.success)) {
+          const errorMessage = responseData && responseData.error 
+            ? responseData.error 
+            : `Failed to ${isEditing ? 'update' : 'create'} payment`;
+          
+          throw new Error(errorMessage);
+        }
+        
+        console.log("Payment success response:", responseData);
+        toast.success(`Payment ${isEditing ? 'updated' : 'recorded'} successfully`);
+        onClose(true);
+      } catch (fetchError) {
+        console.error("Fetch error:", fetchError);
+        throw fetchError;
       }
-
-      toast.success(`Payment ${isEditing ? 'updated' : 'recorded'} successfully`);
-      onClose(true);
     } catch (error) {
       console.error(`Error ${isEditing ? 'updating' : 'creating'} payment:`, error);
       toast.error(error instanceof Error ? error.message : `Failed to ${isEditing ? 'update' : 'create'} payment`);

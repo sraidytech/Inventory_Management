@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,11 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
   const [isUpdating, setIsUpdating] = useState(false);
   const [transactionData, setTransactionData] = useState(transaction);
 
+  // Refresh transaction data when component mounts
+  useEffect(() => {
+    refreshTransactionData();
+  }, [transaction.id]);
+
   // Refresh transaction data when payments are updated
   const refreshTransactionData = async () => {
     try {
@@ -63,8 +68,13 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
       if (!response.ok) {
         throw new Error("Failed to refresh transaction data");
       }
+      
       const data = await response.json();
-      setTransactionData(data);
+      if (data.success && data.data) {
+        setTransactionData(data.data);
+      } else {
+        console.error("Unexpected transaction data structure:", data);
+      }
     } catch (error) {
       console.error("Error refreshing transaction data:", error);
     }
@@ -190,12 +200,12 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Paid: DH {transactionData.amountPaid.toFixed(2)}</span>
+                  <span className="text-sm">Paid: DH {(transactionData?.amountPaid || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className={`text-sm ${transactionData.remainingAmount > 0 ? "text-destructive" : ""}`}>
-                    Remaining: DH {transactionData.remainingAmount.toFixed(2)}
+                  <span className={`text-sm ${(transactionData?.remainingAmount || 0) > 0 ? "text-destructive" : ""}`}>
+                    Remaining: DH {(transactionData?.remainingAmount || 0).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -279,7 +289,7 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
               <PaymentHistory
                 transactionId={transaction.id}
                 clientId={transaction.client?.id}
-                remainingAmount={transactionData.remainingAmount}
+                remainingAmount={transactionData?.remainingAmount || 0}
                 onPaymentUpdate={refreshTransactionData}
               />
             </CardContent>

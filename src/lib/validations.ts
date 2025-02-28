@@ -104,7 +104,7 @@ export const paymentSchema = z.object({
   status: z.enum(["COMPLETED", "PENDING", "FAILED"]).default("COMPLETED"),
   transactionId: z.string().min(1, "Transaction ID is required"),
   clientId: z.string().optional(),
-  userId: z.string().min(1, "User ID is required"),
+  userId: z.string().optional(), // Make userId optional for form validation
 });
 
 export const paymentFormSchema = z.object({

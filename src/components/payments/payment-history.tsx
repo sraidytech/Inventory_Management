@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Trash2, Edit, Plus, DollarSign, CreditCard, FileText, Calendar } from "lucide-react";
 import { PaymentForm } from "./payment-form";
 
@@ -48,11 +48,6 @@ export function PaymentHistory({ transactionId, clientId, remainingAmount, onPay
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch payments when component mounts
-  useState(() => {
-    fetchPayments();
-  });
-
   const fetchPayments = async () => {
     setIsLoading(true);
     try {
@@ -62,11 +57,23 @@ export function PaymentHistory({ transactionId, clientId, remainingAmount, onPay
       }
       
       const data = await response.json();
-      if (data.success && data.data && Array.isArray(data.data.items)) {
-        setPayments(data.data.items);
+      
+      if (data && data.success === true) {
+        // Handle different data structures
+        if (Array.isArray(data.data)) {
+          setPayments(data.data);
+        } else if (data.data && data.data.items && Array.isArray(data.data.items)) {
+          setPayments(data.data.items);
+        } else if (data.data && !data.data.items) {
+          // If data.data exists but doesn't have items property, it might be a direct array
+          setPayments(Array.isArray(data.data) ? data.data : []);
+        } else {
+          // Set empty array as fallback
+          setPayments([]);
+        }
       } else {
-        console.error("Unexpected payment data structure:", data);
-        toast.error("Failed to load payments: Unexpected data format");
+        // Set empty array as fallback
+        setPayments([]);
       }
     } catch (error) {
       console.error("Error fetching payments:", error);
@@ -75,6 +82,11 @@ export function PaymentHistory({ transactionId, clientId, remainingAmount, onPay
       setIsLoading(false);
     }
   };
+
+  // Fetch payments when component mounts
+  useEffect(() => {
+    fetchPayments();
+  }, [transactionId]);
 
   const handleAddPayment = () => {
     setShowAddPayment(true);
@@ -247,6 +259,9 @@ export function PaymentHistory({ transactionId, clientId, remainingAmount, onPay
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Add Payment</DialogTitle>
+              <DialogDescription>
+                Add a new payment for this transaction
+              </DialogDescription>
             </DialogHeader>
             <PaymentForm
               transactionId={transactionId}
@@ -264,6 +279,9 @@ export function PaymentHistory({ transactionId, clientId, remainingAmount, onPay
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Edit Payment</DialogTitle>
+              <DialogDescription>
+                Modify the existing payment details
+              </DialogDescription>
             </DialogHeader>
             <PaymentForm
               transactionId={transactionId}

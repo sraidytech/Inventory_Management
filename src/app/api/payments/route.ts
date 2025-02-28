@@ -1,20 +1,9 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { paymentSchema } from "@/lib/validations";
-import { withAuth, withValidation } from "@/lib/api-middleware";
+import { withAuth } from "@/lib/api-middleware";
 import { ApiError } from "@/lib/api-error";
-import { PaymentMethod } from "@prisma/client";
-import { randomUUID } from "crypto";
-
-interface CreatePaymentData {
-  amount: number;
-  paymentMethod: PaymentMethod;
-  reference?: string;
-  notes?: string;
-  status?: string;
-  transactionId: string;
-  clientId?: string;
-}
+import { auth } from "@clerk/nextjs/server";
 
 // GET /api/payments
 export const GET = withAuth(async (req: NextRequest) => {
@@ -113,132 +102,204 @@ export const GET = withAuth(async (req: NextRequest) => {
 });
 
 // POST /api/payments
-export const POST = withValidation(
-  paymentSchema,
-  async (req: NextRequest, _, userId) => {
-    const data = await req.json() as CreatePaymentData;
+export const POST = async (req: NextRequest) => {
+  try {
+    console.log("POST /api/payments - Start");
+    
+    // Get the user ID from auth
+    const { userId } = await auth();
+    console.log("User ID:", userId);
+    
+    if (!userId) {
+      console.log("Unauthorized - No user ID");
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Clone the request for multiple reads
+    const clonedReq = req.clone();
+    
+    // Parse the request body
+    let data;
+    try {
+      const bodyText = await clonedReq.text();
+      console.log("Request body text:", bodyText);
+      
+      if (!bodyText) {
+        console.log("Empty request body");
+        return NextResponse.json(
+          { success: false, error: "Empty request body" },
+          { status: 400 }
+        );
+      }
+      
+      data = JSON.parse(bodyText);
+      console.log("Parsed data:", data);
+    } catch (error) {
+      console.error("Error parsing request body:", error);
+      return NextResponse.json(
+        { success: false, error: "Invalid request body: " + (error instanceof Error ? error.message : String(error)) },
+        { status: 400 }
+      );
+    }
+
+    // Validate the data
+    console.log("Validating data with schema");
+    const validationResult = paymentSchema.safeParse({ ...data, userId });
+    console.log("Validation result:", validationResult.success ? "Success" : "Failed");
+    
+    if (!validationResult.success) {
+      const errors: Record<string, string[]> = {};
+      validationResult.error.errors.forEach((error) => {
+        const path = error.path.join(".");
+        if (!errors[path]) {
+          errors[path] = [];
+        }
+        errors[path].push(error.message);
+      });
+      
+      console.log("Validation errors:", errors);
+      return NextResponse.json(
+        { success: false, error: "Validation failed", errors },
+        { status: 400 }
+      );
+    }
+
+    const paymentData = validationResult.data;
+    console.log("Validated payment data:", paymentData);
 
     // Validate transaction exists
+    console.log("Finding transaction with ID:", paymentData.transactionId);
     const transaction = await prisma.transaction.findUnique({
-      where: { id: data.transactionId },
+      where: { id: paymentData.transactionId },
       include: {
         client: true,
       },
     });
-
+    
+    console.log("Transaction found:", transaction ? "Yes" : "No");
+    
     if (!transaction) {
+      console.log("Transaction not found");
       throw ApiError.NotFound("Transaction not found");
     }
 
     // For sale transactions, ensure client is associated
     if (transaction.type === "SALE" && !transaction.clientId) {
+      console.log("Sale transaction has no client");
       throw ApiError.BadRequest("Transaction has no associated client");
     }
 
     // Ensure payment amount doesn't exceed remaining amount
-    if (data.amount > transaction.remainingAmount) {
+    console.log("Payment amount:", paymentData.amount, "Remaining amount:", transaction.remainingAmount);
+    if (paymentData.amount > transaction.remainingAmount) {
+      console.log("Payment amount exceeds remaining amount");
       throw ApiError.BadRequest(`Payment amount exceeds remaining amount (${transaction.remainingAmount})`);
     }
 
     // Create payment and update transaction in a transaction
+    console.log("Starting database transaction");
     const result = await prisma.$transaction(async (tx) => {
-      // Create the payment using raw query
-      await tx.$executeRawUnsafe(`
-        INSERT INTO "Payment" (
-          id, amount, "paymentMethod", reference, notes, status, "transactionId", "clientId", "userId", "createdAt", "updatedAt"
-        ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-        ) RETURNING *
-      `, 
-        randomUUID(),
-        data.amount,
-        data.paymentMethod,
-        data.reference || null,
-        data.notes || null,
-        data.status || "COMPLETED",
-        data.transactionId,
-        transaction.clientId || null,
-        userId,
-        new Date(),
-        new Date()
-      );
+      console.log("Creating payment record");
+      
+      // Create the payment using Prisma's built-in methods
+      const newPayment = await tx.payment.create({
+        data: {
+          amount: paymentData.amount,
+          paymentMethod: paymentData.paymentMethod,
+          reference: paymentData.reference || null,
+          notes: paymentData.notes || null,
+          status: paymentData.status || "COMPLETED",
+          transactionId: paymentData.transactionId,
+          clientId: transaction.clientId || null,
+          userId: userId,
+        },
+        include: {
+          transaction: true,
+          client: true,
+        },
+      });
+      
+      console.log("Payment created with ID:", newPayment.id);
 
+      console.log("Updating transaction");
       // Update transaction
-      await tx.transaction.update({
-        where: { id: data.transactionId },
+      const updatedTransaction = await tx.transaction.update({
+        where: { id: paymentData.transactionId },
         data: {
           amountPaid: {
-            increment: data.amount,
+            increment: paymentData.amount,
           },
           remainingAmount: {
-            decrement: data.amount,
+            decrement: paymentData.amount,
           },
           // If payment completes the transaction, update status
-          ...(transaction.remainingAmount - data.amount <= 0 && {
+          ...(transaction.remainingAmount - paymentData.amount <= 0 && {
             status: "COMPLETED",
           }),
         },
       });
+      
+      console.log("Transaction updated, new remaining amount:", updatedTransaction.remainingAmount);
 
+      console.log("Checking if client update is needed");
       // Update client if this is a sale transaction
       if (transaction.type === "SALE" && transaction.clientId) {
-        await tx.client.update({
+        console.log("Updating client balance");
+        const updatedClient = await tx.client.update({
           where: { id: transaction.clientId },
           data: {
             amountPaid: {
-              increment: data.amount,
+              increment: paymentData.amount,
             },
             balance: {
-              decrement: data.amount,
+              decrement: paymentData.amount,
             },
           },
         });
+        
+        console.log("Client updated, new balance:", updatedClient.balance);
       }
-
-      // Get the created payment with related data
-      const payment = await tx.$queryRawUnsafe(`
-        SELECT 
-          p.*,
-          t.id as "t_id", t.type as "t_type", t.total as "t_total", t.status as "t_status",
-          c.id as "c_id", c.name as "c_name"
-        FROM "Payment" p
-        LEFT JOIN "Transaction" t ON p."transactionId" = t.id
-        LEFT JOIN "Client" c ON p."clientId" = c.id
-        WHERE p."transactionId" = $1
-        ORDER BY p."createdAt" DESC
-        LIMIT 1
-      `, data.transactionId);
-
-      const paymentData = (payment as Array<Record<string, unknown>>)[0];
       
+      // Format the response
       return {
-        id: paymentData.id,
-        amount: paymentData.amount,
-        paymentMethod: paymentData.paymentMethod,
-        reference: paymentData.reference,
-        notes: paymentData.notes,
-        status: paymentData.status,
-        transactionId: paymentData.transactionId,
-        clientId: paymentData.clientId,
-        userId: paymentData.userId,
-        createdAt: paymentData.createdAt,
-        updatedAt: paymentData.updatedAt,
-        transaction: paymentData.t_id ? {
-          id: paymentData.t_id,
-          type: paymentData.t_type,
-          total: paymentData.t_total,
-          status: paymentData.t_status,
+        ...newPayment,
+        transaction: newPayment.transaction ? {
+          id: newPayment.transaction.id,
+          type: newPayment.transaction.type,
+          total: newPayment.transaction.total,
+          status: newPayment.transaction.status,
         } : null,
-        client: paymentData.c_id ? {
-          id: paymentData.c_id,
-          name: paymentData.c_name,
+        client: newPayment.client ? {
+          id: newPayment.client.id,
+          name: newPayment.client.name,
         } : null,
       };
     });
 
-    return {
+    console.log("Transaction completed successfully");
+    return NextResponse.json({
       success: true,
       data: result,
-    };
+    });
+  } catch (error) {
+    console.error("Error creating payment:", error);
+    
+    if (error instanceof ApiError) {
+      console.log("API Error:", error.message, "Status:", error.statusCode);
+      return NextResponse.json(
+        { success: false, error: error.message, errors: error.errors },
+        { status: error.statusCode }
+      );
+    }
+    
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.log("Generic error:", errorMessage);
+    return NextResponse.json(
+      { success: false, error: "Failed to create payment: " + errorMessage },
+      { status: 500 }
+    );
   }
-);
+};

@@ -12,6 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { DollarSign, ArrowUpRight, ArrowDownRight, Download } from "lucide-react";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+// Define types for jsPDF with autoTable
+interface JsPDFWithAutoTable extends jsPDF {
+  lastAutoTable?: {
+    finalY: number;
+  };
+}
 
 interface FinancialSummary {
   totalSales: number;
@@ -93,6 +102,12 @@ export default function FinancePage() {
   useEffect(() => {
     fetchFinancialData();
   }, [dateRange]);
+
+  // Initial data fetch
+  useEffect(() => {
+    // Force a refresh when the component mounts
+    fetchFinancialData();
+  }, []);
 
   const fetchFinancialData = async () => {
     setIsLoading(true);
@@ -203,10 +218,181 @@ export default function FinancePage() {
 
   const generateReport = (reportType: string) => {
     toast.info(`Generating ${reportType} report...`);
-    // In a real implementation, this would generate and download a report
-    setTimeout(() => {
-      toast.success(`${reportType} report generated successfully`);
-    }, 1500);
+    
+    try {
+      // Create a new PDF document
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(18);
+      doc.text(reportType, 14, 22);
+      
+      // Add date and period
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${format(new Date(), "MMM d, yyyy")}`, 14, 30);
+      doc.text(`Period: ${formatDate(dateRange.startDate)} to ${formatDate(dateRange.endDate)}`, 14, 35);
+      
+      // Add company info
+      doc.setFontSize(12);
+      doc.text("Inventory Management System", 14, 45);
+      
+      // Add financial summary
+      doc.setFontSize(14);
+      doc.text("Financial Summary", 14, 55);
+      
+      // Create summary table
+      autoTable(doc, {
+        startY: 60,
+        head: [['Category', 'Amount (DH)']],
+        body: [
+          ['Total Sales', financialSummary.totalSales.toFixed(2)],
+          ['Total Purchases', financialSummary.totalPurchases.toFixed(2)],
+          ['Total Received', financialSummary.totalReceived.toFixed(2)],
+          ['Total Paid', financialSummary.totalPaid.toFixed(2)],
+          ['Pending Receivables', financialSummary.pendingReceivables.toFixed(2)],
+          ['Pending Payables', financialSummary.pendingPayables.toFixed(2)],
+          ['Profit', financialSummary.profit.toFixed(2)],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [66, 66, 66] },
+      });
+      
+      // Add specific content based on report type
+      if (reportType === "Profit & Loss") {
+        // Add P&L specific content
+        const finalY = (doc as JsPDFWithAutoTable).lastAutoTable?.finalY || 120;
+        doc.text("Profit & Loss Statement", 14, finalY + 10);
+        
+        autoTable(doc, {
+          startY: finalY + 15,
+          head: [['Category', 'Amount (DH)']],
+          body: [
+            ['Revenue', financialSummary.totalSales.toFixed(2)],
+            ['Cost of Goods', financialSummary.totalPurchases.toFixed(2)],
+            ['Gross Profit', (financialSummary.totalSales - financialSummary.totalPurchases).toFixed(2)],
+            ['Net Profit', financialSummary.profit.toFixed(2)],
+          ],
+          theme: 'grid',
+        });
+      } else if (reportType === "Balance Sheet") {
+        // Add Balance Sheet specific content
+        const finalY = (doc as JsPDFWithAutoTable).lastAutoTable?.finalY || 120;
+        doc.text("Balance Sheet", 14, finalY + 10);
+        
+        autoTable(doc, {
+          startY: finalY + 15,
+          head: [['Assets', 'Amount (DH)']],
+          body: [
+            ['Cash', financialSummary.totalReceived.toFixed(2)],
+            ['Accounts Receivable', financialSummary.pendingReceivables.toFixed(2)],
+            ['Inventory', '0.00'], // This would need actual inventory value
+            ['Total Assets', (financialSummary.totalReceived + financialSummary.pendingReceivables).toFixed(2)],
+          ],
+          theme: 'grid',
+        });
+        
+        const assetsY = (doc as JsPDFWithAutoTable).lastAutoTable?.finalY || 160;
+        
+        autoTable(doc, {
+          startY: assetsY + 10,
+          head: [['Liabilities & Equity', 'Amount (DH)']],
+          body: [
+            ['Accounts Payable', financialSummary.pendingPayables.toFixed(2)],
+            ['Equity', (financialSummary.totalReceived + financialSummary.pendingReceivables - financialSummary.pendingPayables).toFixed(2)],
+            ['Total Liabilities & Equity', (financialSummary.totalReceived + financialSummary.pendingReceivables).toFixed(2)],
+          ],
+          theme: 'grid',
+        });
+      } else if (reportType === "Cash Flow") {
+        // Add Cash Flow specific content
+        const finalY = (doc as JsPDFWithAutoTable).lastAutoTable?.finalY || 120;
+        doc.text("Cash Flow Statement", 14, finalY + 10);
+        
+        autoTable(doc, {
+          startY: finalY + 15,
+          head: [['Cash Flow', 'Amount (DH)']],
+          body: [
+            ['Cash from Operations', financialSummary.totalReceived.toFixed(2)],
+            ['Cash used in Operations', financialSummary.totalPaid.toFixed(2)],
+            ['Net Cash Flow', (financialSummary.totalReceived - financialSummary.totalPaid).toFixed(2)],
+          ],
+          theme: 'grid',
+        });
+      } else if (reportType === "Client Statement" && selectedClient) {
+        // Add Client Statement specific content
+        const client = clientDebts.find(c => c.id === selectedClient);
+        if (client) {
+          const finalY = (doc as JsPDFWithAutoTable).lastAutoTable?.finalY || 120;
+          doc.text(`Client Statement: ${client.name}`, 14, finalY + 10);
+          
+          autoTable(doc, {
+            startY: finalY + 15,
+            head: [['Category', 'Amount (DH)']],
+            body: [
+              ['Total Due', client.totalDue.toFixed(2)],
+              ['Amount Paid', client.amountPaid.toFixed(2)],
+              ['Balance', client.balance.toFixed(2)],
+            ],
+            theme: 'grid',
+          });
+        }
+      } else if (reportType === "Aging Report") {
+        // Add Aging Report specific content
+        const finalY = (doc as JsPDFWithAutoTable).lastAutoTable?.finalY || 120;
+        doc.text("Accounts Receivable Aging Report", 14, finalY + 10);
+        
+        // In a real implementation, you would categorize receivables by age
+        autoTable(doc, {
+          startY: finalY + 15,
+          head: [['Client', 'Current', '1-30 Days', '31-60 Days', '61-90 Days', '90+ Days', 'Total']],
+          body: clientDebts.map(client => [
+            client.name,
+            client.balance.toFixed(2), // This is simplified - would need actual aging data
+            '0.00',
+            '0.00',
+            '0.00',
+            '0.00',
+            client.balance.toFixed(2),
+          ]),
+          theme: 'grid',
+        });
+      } else if (reportType === "Payment History") {
+        // Add Payment History specific content
+        const finalY = (doc as JsPDFWithAutoTable).lastAutoTable?.finalY || 120;
+        doc.text("Payment History Report", 14, finalY + 10);
+        
+        autoTable(doc, {
+          startY: finalY + 15,
+          head: [['Date', 'Client', 'Method', 'Amount', 'Status']],
+          body: recentPayments
+            .filter(payment => !selectedClient || payment.clientId === selectedClient)
+            .map(payment => [
+              formatDate(payment.createdAt),
+              payment.client?.name || "N/A",
+              getPaymentMethodLabel(payment.paymentMethod),
+              payment.amount.toFixed(2),
+              payment.status,
+            ]),
+          theme: 'grid',
+        });
+      }
+      
+      // Add footer
+      const pageCount = doc.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+      }
+      
+      // Save the PDF
+      doc.save(`${reportType.toLowerCase().replace(/\s+/g, '-')}-report.pdf`);
+      
+      toast.success(`${reportType} report downloaded successfully`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF report");
+    }
   };
 
   return (
@@ -409,53 +595,6 @@ export default function FinancePage() {
               )}
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Reminders</CardTitle>
-              <CardDescription>Send payment reminders to clients with outstanding balances</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-end gap-4">
-                  <div className="flex-1">
-                    <Label htmlFor="clientSelect">Select Client</Label>
-                    <Select
-                      value={selectedClient || "all"}
-                      onValueChange={handleClientSelect}
-                    >
-                      <SelectTrigger id="clientSelect">
-                        <SelectValue placeholder="Select a client" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Clients with Balance</SelectItem>
-                        {clientDebts.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.name} ({formatCurrency(client.balance)})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button>
-                    Send Reminder
-                  </Button>
-                </div>
-
-                <div className="bg-muted p-4 rounded-md">
-                  <h3 className="font-medium mb-2">Reminder Template</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Dear [Client Name],<br /><br />
-                    This is a friendly reminder that you have an outstanding balance of [Balance Amount] with us.<br />
-                    Please arrange for payment at your earliest convenience.<br /><br />
-                    Thank you for your business.<br /><br />
-                    Best regards,<br />
-                    [Your Company Name]
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Payments Tab */}
@@ -486,7 +625,10 @@ export default function FinancePage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button variant="outline">
+                <Button 
+                  variant="outline"
+                  onClick={() => generateReport("Payment History")}
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>

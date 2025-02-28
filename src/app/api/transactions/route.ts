@@ -61,6 +61,8 @@ export const GET = withAuth(async (req: NextRequest) => {
             },
           },
         },
+        client: true,
+        supplier: true,
       },
       skip: (page - 1) * limit,
       take: limit,
@@ -156,6 +158,7 @@ export const POST = withValidation(
             },
           },
           client: true,
+          supplier: true,
         },
       });
 
