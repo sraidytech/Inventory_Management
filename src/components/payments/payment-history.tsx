@@ -51,27 +51,58 @@ export function PaymentHistory({ transactionId, clientId, remainingAmount, onPay
   const fetchPayments = async () => {
     setIsLoading(true);
     try {
+      console.log("Fetching payments for transaction:", transactionId);
       const response = await fetch(`/api/payments?transactionId=${transactionId}`);
+      
       if (!response.ok) {
         throw new Error("Failed to fetch payments");
       }
       
-      const data = await response.json();
+      // Get the raw response text for debugging
+      const responseText = await response.text();
+      console.log("Payment history API response text:", responseText);
+      
+      // Parse the response text
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log("Parsed payment history data:", data);
+      } catch (e) {
+        console.error("Error parsing payment history response:", e);
+        throw new Error("Invalid response format");
+      }
       
       if (data && data.success === true) {
+        console.log("Payment data structure:", {
+          isArray: Array.isArray(data.data),
+          hasNestedData: data.data && data.data.data,
+          hasItems: data.data && data.data.data && data.data.data.items,
+          itemsIsArray: data.data && data.data.data && data.data.data.items && Array.isArray(data.data.data.items)
+        });
+        
         // Handle different data structures
         if (Array.isArray(data.data)) {
+          console.log("Setting payments from array data:", data.data);
           setPayments(data.data);
+        } else if (data.data && data.data.data && data.data.data.items && Array.isArray(data.data.data.items)) {
+          // Handle nested data structure from the API
+          console.log("Setting payments from nested data.data.data.items:", data.data.data.items);
+          setPayments(data.data.data.items);
         } else if (data.data && data.data.items && Array.isArray(data.data.items)) {
+          console.log("Setting payments from data.items:", data.data.items);
           setPayments(data.data.items);
         } else if (data.data && !data.data.items) {
           // If data.data exists but doesn't have items property, it might be a direct array
-          setPayments(Array.isArray(data.data) ? data.data : []);
+          const paymentsArray = Array.isArray(data.data) ? data.data : [];
+          console.log("Setting payments from data object:", paymentsArray);
+          setPayments(paymentsArray);
         } else {
           // Set empty array as fallback
+          console.log("No valid payment data found, setting empty array");
           setPayments([]);
         }
       } else {
+        console.log("API response indicates failure or invalid format:", data);
         // Set empty array as fallback
         setPayments([]);
       }

@@ -161,6 +161,22 @@ export const POST = withValidation(
           supplier: true,
         },
       });
+      
+      // Create a payment record if there's an initial payment
+      if (amountPaid > 0 && data.paymentMethod) {
+        await tx.payment.create({
+          data: {
+            amount: amountPaid,
+            paymentMethod: data.paymentMethod as PaymentMethod,
+            reference: data.reference,
+            notes: data.notes ? `Initial payment: ${data.notes}` : "Initial payment",
+            status: "COMPLETED",
+            transactionId: transaction.id,
+            clientId: data.clientId,
+            userId,
+          },
+        });
+      }
 
       // Update product quantities
       for (const item of data.items) {

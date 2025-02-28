@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ArrowUpRight, ArrowDownRight, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { TransactionDetails } from "@/components/transactions/transaction-details";
@@ -202,6 +202,12 @@ export function TransactionsClient() {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Record Purchase</DialogTitle>
+                <DialogDescription>
+                  Create a new purchase transaction from a supplier
+                </DialogDescription>
+              </DialogHeader>
               <TransactionForm 
                 type="PURCHASE" 
                 onSuccess={handleTransactionCreated} 
@@ -217,6 +223,12 @@ export function TransactionsClient() {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Record Sale</DialogTitle>
+                <DialogDescription>
+                  Create a new sale transaction to a client
+                </DialogDescription>
+              </DialogHeader>
               <TransactionForm 
                 type="SALE" 
                 onSuccess={handleTransactionCreated} 

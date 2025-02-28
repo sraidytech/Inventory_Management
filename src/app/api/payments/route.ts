@@ -15,90 +15,106 @@ export const GET = withAuth(async (req: NextRequest) => {
   const startDate = searchParams.get("startDate");
   const endDate = searchParams.get("endDate");
 
-  // Using raw queries until Prisma client is regenerated
-  const whereConditions: string[] = [];
-  const params: (string | Date)[] = [];
+  // Get the user ID from auth
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  console.log("GET /api/payments - Query parameters:", {
+    page,
+    limit,
+    transactionId,
+    clientId,
+    startDate,
+    endDate,
+    userId
+  });
+
+  // Build where conditions using Prisma's query builder
+  const where: {
+    userId: string;
+    transactionId?: string;
+    clientId?: string;
+    createdAt?: {
+      gte: Date;
+      lte: Date;
+    };
+  } = {
+    userId: userId
+  };
   
   if (transactionId) {
-    whereConditions.push(`"transactionId" = $${params.length + 1}`);
-    params.push(transactionId);
+    where.transactionId = transactionId;
+    console.log("Filtering by transactionId:", transactionId);
   }
   
   if (clientId) {
-    whereConditions.push(`"clientId" = $${params.length + 1}`);
-    params.push(clientId);
+    where.clientId = clientId;
   }
   
   if (startDate && endDate) {
-    whereConditions.push(`"createdAt" BETWEEN $${params.length + 1} AND $${params.length + 2}`);
-    params.push(new Date(startDate), new Date(endDate));
+    where.createdAt = {
+      gte: new Date(startDate),
+      lte: new Date(endDate)
+    };
   }
-  
-  const whereClause = whereConditions.length > 0 
-    ? `WHERE ${whereConditions.join(" AND ")}` 
-    : "";
 
-  const countQuery = `
-    SELECT COUNT(*) FROM "Payment" ${whereClause}
-  `;
-  
-  const itemsQuery = `
-    SELECT 
-      p.*,
-      t.id as "t_id", t.type as "t_type", t.total as "t_total", t.status as "t_status",
-      c.id as "c_id", c.name as "c_name"
-    FROM "Payment" p
-    LEFT JOIN "Transaction" t ON p."transactionId" = t.id
-    LEFT JOIN "Client" c ON p."clientId" = c.id
-    ${whereClause}
-    ORDER BY p."createdAt" DESC
-    LIMIT ${limit} OFFSET ${(page - 1) * limit}
-  `;
-
-  const [countResult, itemsResult] = await Promise.all([
-    prisma.$queryRawUnsafe(countQuery, ...params),
-    prisma.$queryRawUnsafe(itemsQuery, ...params),
-  ]);
-
-  const total = parseInt((countResult as Array<{count: string}>)[0].count);
-  
-  // Transform raw results to match expected format
-  const items = (itemsResult as Array<Record<string, unknown>>).map(item => ({
-    id: item.id,
-    amount: item.amount,
-    paymentMethod: item.paymentMethod,
-    reference: item.reference,
-    notes: item.notes,
-    status: item.status,
-    transactionId: item.transactionId,
-    clientId: item.clientId,
-    userId: item.userId,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-    transaction: item.t_id ? {
-      id: item.t_id,
-      type: item.t_type,
-      total: item.t_total,
-      status: item.t_status,
-    } : null,
-    client: item.c_id ? {
-      id: item.c_id,
-      name: item.c_name,
-    } : null,
-  }));
-
-  return {
-    success: true,
-    data: {
-      items,
-      metadata: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+  try {
+    // Get total count
+    const total = await prisma.payment.count({ where });
+    console.log("Total payments found:", total);
+    
+    // Get paginated items with relations
+    const items = await prisma.payment.findMany({
+      where,
+      include: {
+        transaction: {
+          select: {
+            id: true,
+            type: true,
+            total: true,
+            status: true
+          }
+        },
+        client: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       },
-    },
-  };
+      orderBy: {
+        createdAt: 'desc'
+      },
+      skip: (page - 1) * limit,
+      take: limit
+    });
+    
+    console.log(`Found ${items.length} payments`);
+    
+    return {
+      success: true,
+      data: {
+        items,
+        metadata: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching payments:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch payments" },
+      { status: 500 }
+    );
+  }
 });
 
 // POST /api/payments
