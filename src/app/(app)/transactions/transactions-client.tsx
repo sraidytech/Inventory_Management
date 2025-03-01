@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ArrowUpRight, ArrowDownRight, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Search, Filter, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { generateFrenchInvoice } from "@/components/transactions/french-invoice";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { TransactionDetails } from "@/components/transactions/transaction-details";
 import { TransactionsTableSkeleton } from "@/components/transactions/loading";
@@ -333,23 +334,42 @@ export function TransactionsClient() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => setSelectedTransaction(transaction)}
-                            >
-                              View Details
-                            </Button>
-                          </DialogTrigger>
-                          {selectedTransaction && selectedTransaction.id === transaction.id && (
-                            <TransactionDetails 
-                              transaction={selectedTransaction}
-                              onClose={() => setSelectedTransaction(null)}
-                            />
-                          )}
-                        </Dialog>
+                        <div className="flex gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setSelectedTransaction(transaction)}
+                              >
+                                View Details
+                              </Button>
+                            </DialogTrigger>
+                            {selectedTransaction && selectedTransaction.id === transaction.id && (
+                              <TransactionDetails 
+                                transaction={selectedTransaction}
+                                onClose={() => setSelectedTransaction(null)}
+                              />
+                            )}
+                          </Dialog>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              try {
+                                generateFrenchInvoice(transaction);
+                                toast.success("Facture générée avec succès");
+                              } catch (error) {
+                                console.error("Error generating invoice:", error);
+                                toast.error("Échec de la génération de la facture");
+                              }
+                            }}
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            Generate Invoice
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
