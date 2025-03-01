@@ -403,7 +403,9 @@ export default function FinancePage() {
             .filter(payment => !selectedClient || payment.clientId === selectedClient)
             .map(payment => [
               formatDate(payment.createdAt),
-              payment.client?.name || "N/A",
+              payment.transaction?.type === "PURCHASE" 
+                ? "Supplier Payment" 
+                : (payment.client?.name || "Unknown Client"),
               getPaymentMethodLabel(payment.paymentMethod),
               payment.amount.toFixed(2),
               payment.status,
@@ -552,7 +554,11 @@ export default function FinancePage() {
                       {recentPayments.map((payment) => (
                         <tr key={payment.id} className="border-b">
                           <td className="px-4 py-2">{formatDate(payment.createdAt)}</td>
-                          <td className="px-4 py-2">{payment.client?.name || "N/A"}</td>
+                          <td className="px-4 py-2">
+                            {payment.transaction?.type === "PURCHASE" 
+                              ? "Supplier Payment" 
+                              : (payment.client?.name || "Unknown Client")}
+                          </td>
                           <td className="px-4 py-2">{getPaymentMethodLabel(payment.paymentMethod)}</td>
                           <td className="px-4 py-2 text-right">{formatCurrency(payment.amount)}</td>
                           <td className="px-4 py-2 text-center">
@@ -698,7 +704,11 @@ export default function FinancePage() {
                         .map((payment) => (
                           <tr key={payment.id} className="border-b">
                             <td className="px-4 py-2">{formatDate(payment.createdAt)}</td>
-                            <td className="px-4 py-2">{payment.client?.name || "N/A"}</td>
+                            <td className="px-4 py-2">
+                              {payment.transaction?.type === "PURCHASE" 
+                                ? "Supplier Payment" 
+                                : (payment.client?.name || "Unknown Client")}
+                            </td>
                             <td className="px-4 py-2">
                               {payment.transaction?.type === "SALE" ? "Sale" : "Purchase"} #{payment.transactionId.substring(0, 8)}
                             </td>
