@@ -24,8 +24,6 @@ import {
   ChevronDown,
   Tags,
   UserCircle,
-  ArrowDownRight,
-  ArrowUpRight,
   DollarSign
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -71,27 +69,7 @@ const routes: RouteItem[] = [
     label: "Transactions",
     icon: ShoppingCart,
     href: "/transactions",
-    color: "text-orange-500",
-    subRoutes: [
-      {
-        label: "All Transactions",
-        icon: ShoppingCart,
-        href: "/transactions",
-        color: "text-orange-500"
-      },
-      {
-        label: "Record Purchase",
-        icon: ArrowDownRight,
-        href: "/transactions/purchase",
-        color: "text-blue-500"
-      },
-      {
-        label: "Record Sale",
-        icon: ArrowUpRight,
-        href: "/transactions/sale",
-        color: "text-green-500"
-      }
-    ]
+    color: "text-orange-500"
   },
   {
     label: "Finance",

@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ArrowUpRight, ArrowDownRight, Search, Filter, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Search, Filter, ChevronLeft, ChevronRight, FileText, Calendar } from "lucide-react";
+// No longer using the DatePicker component
 import { generateFrenchInvoice } from "@/components/transactions/french-invoice";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { TransactionDetails } from "@/components/transactions/transaction-details";
@@ -82,12 +83,36 @@ export function TransactionsClient() {
   const [statusFilter, setStatusFilter] = useState<string | undefined>(
     searchParams.get("status") || undefined
   );
+  const [startDate, setStartDate] = useState<string>(
+    searchParams.get("startDate") || ""
+  );
+  const [endDate, setEndDate] = useState<string>(
+    searchParams.get("endDate") || ""
+  );
+  const [showDateFilter, setShowDateFilter] = useState(false);
   
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
   const [showSaleForm, setShowSaleForm] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   const page = Number(searchParams.get("page") || "1");
+
+  // Search functionality
+  const filteredTransactions = transactions.filter((transaction) => {
+    if (!searchTerm) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    const partyName = transaction.type === "PURCHASE" 
+      ? transaction.supplier?.name || ""
+      : transaction.client?.name || "";
+    
+    return (
+      partyName.toLowerCase().includes(searchLower) ||
+      transaction.reference?.toLowerCase().includes(searchLower) ||
+      transaction.notes?.toLowerCase().includes(searchLower) ||
+      transaction.total.toString().includes(searchLower)
+    );
+  });
 
   // Fetch transactions
   useEffect(() => {
@@ -102,6 +127,10 @@ export function TransactionsClient() {
         
         if (statusFilter) {
           url += `&status=${statusFilter}`;
+        }
+        
+        if (startDate && endDate) {
+          url += `&startDate=${startDate}&endDate=${endDate}`;
         }
         
         const response = await fetch(url);
@@ -119,7 +148,7 @@ export function TransactionsClient() {
     };
 
     fetchTransactions();
-  }, [page, typeFilter, statusFilter, metadata.limit]);
+  }, [page, typeFilter, statusFilter, startDate, endDate, metadata.limit]);
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -240,11 +269,12 @@ export function TransactionsClient() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2">
+      <div className="flex items-center flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm">Filters:</span>
         </div>
+        
         <Select
           value={typeFilter || "ALL"}
           onValueChange={handleTypeFilterChange}
@@ -274,6 +304,71 @@ export function TransactionsClient() {
             <SelectItem value="CANCELLED">Cancelled</SelectItem>
           </SelectContent>
         </Select>
+        
+        <Dialog open={showDateFilter} onOpenChange={setShowDateFilter}>
+          <DialogTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className={`flex items-center gap-1 ${startDate && endDate ? "bg-blue-50 border-blue-200" : ""}`}
+            >
+              <Calendar className="h-4 w-4" />
+              {startDate && endDate ? `${startDate} - ${endDate}` : "Date Filter"}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Filter by Date Range</DialogTitle>
+              <DialogDescription>
+                Select a date range to filter transactions
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Start Date</label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">End Date</label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setStartDate("");
+                  setEndDate("");
+                  setShowDateFilter(false);
+                  handlePageChange(1);
+                }}
+              >
+                Clear
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowDateFilter(false);
+                  handlePageChange(1);
+                }}
+                disabled={!startDate || !endDate}
+              >
+                Apply Filter
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Transactions Table */}
@@ -293,14 +388,14 @@ export function TransactionsClient() {
                 </tr>
               </thead>
               <tbody>
-                {transactions.length === 0 ? (
+                {filteredTransactions.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
                       No transactions found
                     </td>
                   </tr>
                 ) : (
-                  transactions.map((transaction) => (
+                  filteredTransactions.map((transaction) => (
                     <tr key={transaction.id} className="bg-white border-b">
                       <td className="px-6 py-4">{formatDate(transaction.createdAt)}</td>
                       <td className="px-6 py-4">
