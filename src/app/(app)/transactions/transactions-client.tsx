@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ArrowUpRight, ArrowDownRight, Search, Filter, ChevronLeft, ChevronRight, FileText, Calendar } from "lucide-react";
-// No longer using the DatePicker component
+import { ArrowUpRight, ArrowDownRight, Search, Filter, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { generateFrenchInvoice } from "@/components/transactions/french-invoice";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { TransactionDetails } from "@/components/transactions/transaction-details";
@@ -89,7 +89,6 @@ export function TransactionsClient() {
   const [endDate, setEndDate] = useState<string>(
     searchParams.get("endDate") || ""
   );
-  const [showDateFilter, setShowDateFilter] = useState(false);
   
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
   const [showSaleForm, setShowSaleForm] = useState(false);
@@ -269,106 +268,78 @@ export function TransactionsClient() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">Filters:</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Filters:</span>
+          </div>
+          
+          <Select
+            value={typeFilter || "ALL"}
+            onValueChange={handleTypeFilterChange}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Transaction Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Types</SelectItem>
+              <SelectItem value="PURCHASE">Purchases</SelectItem>
+              <SelectItem value="SALE">Sales</SelectItem>
+              <SelectItem value="ADJUSTMENT">Adjustments</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select
+            value={statusFilter || "ALL"}
+            onValueChange={handleStatusFilterChange}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Statuses</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+            onApply={() => handlePageChange(1)}
+            onClear={() => {
+              setStartDate("");
+              setEndDate("");
+              handlePageChange(1);
+            }}
+          />
         </div>
         
-        <Select
-          value={typeFilter || "ALL"}
-          onValueChange={handleTypeFilterChange}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Transaction Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All Types</SelectItem>
-            <SelectItem value="PURCHASE">Purchases</SelectItem>
-            <SelectItem value="SALE">Sales</SelectItem>
-            <SelectItem value="ADJUSTMENT">Adjustments</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        <Select
-          value={statusFilter || "ALL"}
-          onValueChange={handleStatusFilterChange}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All Statuses</SelectItem>
-            <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="COMPLETED">Completed</SelectItem>
-            <SelectItem value="CANCELLED">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        <Dialog open={showDateFilter} onOpenChange={setShowDateFilter}>
-          <DialogTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm"
-              className={`flex items-center gap-1 ${startDate && endDate ? "bg-blue-50 border-blue-200" : ""}`}
-            >
-              <Calendar className="h-4 w-4" />
-              {startDate && endDate ? `${startDate} - ${endDate}` : "Date Filter"}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Filter by Date Range</DialogTitle>
-              <DialogDescription>
-                Select a date range to filter transactions
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Start Date</label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">End Date</label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-between">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setStartDate("");
-                  setEndDate("");
-                  setShowDateFilter(false);
-                  handlePageChange(1);
-                }}
-              >
-                Clear
-              </Button>
-              <Button 
-                onClick={() => {
-                  setShowDateFilter(false);
-                  handlePageChange(1);
-                }}
-                disabled={!startDate || !endDate}
-              >
-                Apply Filter
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Reset All Filters Button */}
+        {(typeFilter || statusFilter || startDate || endDate) && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              setTypeFilter(undefined);
+              setStatusFilter(undefined);
+              setStartDate("");
+              setEndDate("");
+              setSearchTerm("");
+              
+              const params = new URLSearchParams();
+              params.set("page", "1");
+              router.push(`/transactions?${params.toString()}`);
+            }}
+            className="ml-2"
+          >
+            Reset All Filters
+          </Button>
+        )}
       </div>
 
       {/* Transactions Table */}
