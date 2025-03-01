@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { CreditCard } from "lucide-react";
 
 export default function DebugPage() {
   interface ApiResponse {
@@ -63,7 +65,22 @@ export default function DebugPage() {
         Use this page to debug API responses and verify data structures.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Debug Tools */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Debug Tools</CardTitle>
+            <CardDescription>Additional debugging utilities</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Link href="/debug/payments" className="block">
+              <Button variant="outline" className="w-full flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Generate Sample Payments
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
         {/* Products Debug */}
         <Card>
           <CardHeader>

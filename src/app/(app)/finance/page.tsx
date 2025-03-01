@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { DollarSign, ArrowUpRight, ArrowDownRight, Download } from "lucide-react";
+import { PaymentChart } from "@/components/finance/payment-chart";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -160,10 +161,44 @@ export default function FinancePage() {
       if (!paymentsResponse.ok) {
         throw new Error("Failed to fetch payments");
       }
-      const paymentsData = await paymentsResponse.json();
       
+      // Get the raw response text for debugging
+      const paymentsResponseText = await paymentsResponse.text();
+      console.log("Raw payments API response:", paymentsResponseText);
+      
+      // Parse the response text
+      let paymentsData;
+      try {
+        paymentsData = JSON.parse(paymentsResponseText);
+        console.log("Parsed payments data:", paymentsData);
+      } catch (e) {
+        console.error("Error parsing payments response:", e);
+        throw new Error("Invalid payments response format");
+      }
+      
+      // Check the structure of the data
+      console.log("Payments data structure:", {
+        hasData: !!paymentsData.data,
+        dataIsArray: Array.isArray(paymentsData.data),
+        hasItems: paymentsData.data && paymentsData.data.items,
+        itemsIsArray: paymentsData.data && paymentsData.data.items && Array.isArray(paymentsData.data.items),
+        hasNestedData: paymentsData.data && paymentsData.data.data,
+        nestedDataHasItems: paymentsData.data && paymentsData.data.data && paymentsData.data.data.items
+      });
+      
+      // Handle different data structures
       if (paymentsData.success && paymentsData.data && Array.isArray(paymentsData.data.items)) {
+        console.log("Setting payments from data.items:", paymentsData.data.items);
         setRecentPayments(paymentsData.data.items);
+      } else if (paymentsData.success && paymentsData.data && paymentsData.data.data && Array.isArray(paymentsData.data.data.items)) {
+        console.log("Setting payments from nested data.data.items:", paymentsData.data.data.items);
+        setRecentPayments(paymentsData.data.data.items);
+      } else if (paymentsData.success && Array.isArray(paymentsData.data)) {
+        console.log("Setting payments from array data:", paymentsData.data);
+        setRecentPayments(paymentsData.data);
+      } else {
+        console.log("No valid payment data found, setting empty array");
+        setRecentPayments([]);
       }
     } catch (error) {
       console.error("Error fetching financial data:", error);
@@ -433,6 +468,11 @@ export default function FinancePage() {
 
         {/* Financial Summary Tab */}
         <TabsContent value="summary" className="space-y-6">
+          {/* Payment Analytics Chart */}
+          <PaymentChart 
+            payments={recentPayments} 
+            dateRange={dateRange}
+          />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-2">
