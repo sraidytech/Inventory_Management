@@ -156,11 +156,37 @@ model Payment {
   updatedAt       DateTime      @updatedAt
 }
 
+enum NotificationType {
+  STOCK_ALERT
+  PAYMENT_DUE
+  PAYMENT_RECEIVED
+  SYSTEM
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+model Notification {
+  id        String             @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  status    NotificationStatus @default(UNREAD)
+  link      String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
 model UserSettings {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  language  String   @default("en")
-  theme     String   @default("light")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  language      String   @default("en")
+  theme         String   @default("light")
+  notifications Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

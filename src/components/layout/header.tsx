@@ -1,17 +1,36 @@
 "use client"
 
 import { UserButton } from "@clerk/nextjs"
-import { Bell, Sun, Menu } from "lucide-react"
+import { Sun, Moon, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Sidebar } from "./sidebar"
+import { NotificationDropdown } from "./notification-dropdown"
 import { useClickOutside } from "@/hooks/use-click-outside"
 import { useSwipe } from "@/hooks/use-swipe"
 
 export function Header() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [theme, setTheme] = useState<"light" | "dark">("light")
   const sidebarRef = useRef<HTMLDivElement>(null)
+
+  // Load theme from localStorage on component mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null
+    if (savedTheme) {
+      setTheme(savedTheme)
+      document.documentElement.classList.toggle("dark", savedTheme === "dark")
+    }
+  }, [])
+
+  // Toggle theme function
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light"
+    setTheme(newTheme)
+    localStorage.setItem("theme", newTheme)
+    document.documentElement.classList.toggle("dark", newTheme === "dark")
+  }
 
   useClickOutside(sidebarRef, () => {
     if (showMobileMenu) {
@@ -43,11 +62,18 @@ export function Header() {
             <Menu className="h-5 w-5" />
           </Button>
           <div className="ml-auto flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Sun className="h-5 w-5" />
+            <NotificationDropdown />
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={toggleTheme}
+              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              {theme === "light" ? (
+                <Moon className="h-5 w-5" />
+              ) : (
+                <Sun className="h-5 w-5" />
+              )}
             </Button>
             <UserButton afterSignOutUrl="/sign-in" />
           </div>
