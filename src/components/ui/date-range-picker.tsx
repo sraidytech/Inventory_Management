@@ -19,7 +19,7 @@ interface DateRangePickerProps {
   endDate: string
   onStartDateChange: (date: string) => void
   onEndDateChange: (date: string) => void
-  onApply: () => void
+  onApply: (startDate?: string, endDate?: string) => void
   onClear: () => void
   className?: string
 }
@@ -114,10 +114,8 @@ export function DateRangePicker({
                 // Close the popover
                 setOpen(false);
                 
-                // Then trigger the apply callback after a short delay to ensure state is updated
-                setTimeout(() => {
-                  if (onApply) onApply();
-                }, 50);
+  // Call onApply directly with the selected dates to avoid race conditions with state updates
+  if (onApply) onApply(formattedFrom, formattedTo);
               }
             }}
             disabled={!date?.from || !date?.to}

@@ -30,17 +30,22 @@ export function DashboardFilter({
     setLocalEndDate(endDate);
   }, [startDate, endDate]);
 
-  const handleApplyFilter = () => {
-    console.log("Dashboard filter applying dates:", localStartDate, localEndDate);
+  const handleApplyFilter = (newStartDate?: string, newEndDate?: string) => {
+    // Use the dates passed directly from the DateRangePicker if available
+    const currentStartDate = newStartDate || localStartDate;
+    const currentEndDate = newEndDate || localEndDate;
+    
+    console.log("Dashboard filter applying dates:", currentStartDate, currentEndDate);
+    
+    // Update local state
+    setLocalStartDate(currentStartDate);
+    setLocalEndDate(currentEndDate);
     
     // Force a refresh with the new dates - this will update the parent component
-    onDateChange(localStartDate, localEndDate);
+    onDateChange(currentStartDate, currentEndDate);
     
-    // Wait a moment to ensure state is updated before refreshing
-    setTimeout(() => {
-      // Trigger a refresh immediately after changing dates
-      handleRefresh();
-    }, 100);
+    // Trigger a refresh immediately after changing dates with the new dates
+    handleRefresh(currentStartDate, currentEndDate);
   };
 
   const handleClearFilter = () => {
@@ -48,15 +53,22 @@ export function DashboardFilter({
     setLocalStartDate(today);
     setLocalEndDate(today);
     onDateChange(today, today);
-    // Trigger a refresh immediately after clearing dates
-    handleRefresh();
+    // Trigger a refresh immediately after clearing dates with today's date
+    handleRefresh(today, today);
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = async (refreshStartDate?: string, refreshEndDate?: string) => {
     setRefreshing(true);
     try {
+      // Use the current local state if no dates are provided
+      const currentStartDate = refreshStartDate || localStartDate;
+      const currentEndDate = refreshEndDate || localEndDate;
+      
+      // Update parent component with the current dates
+      onDateChange(currentStartDate, currentEndDate);
+      
       await onRefresh();
-      console.log("Dashboard refreshed");
+      console.log("Dashboard refreshed with date range:", currentStartDate, currentEndDate);
     } catch (error) {
       console.error("Error refreshing dashboard:", error);
     } finally {
@@ -71,7 +83,7 @@ export function DashboardFilter({
         <Button
           variant="outline"
           size="icon"
-          onClick={handleRefresh}
+          onClick={() => handleRefresh()}
           disabled={isLoading || refreshing}
           className="ml-2"
         >

@@ -18,8 +18,8 @@ import {
   FolderIcon,
   TrendingUpIcon,
   TrendingDownIcon,
-  ArchiveIcon,
   DollarSignIcon,
+  ArchiveIcon,
   CreditCardIcon,
   PercentIcon,
 } from "lucide-react";
@@ -94,12 +94,12 @@ export default function DashboardPage() {
   });
 
   // Fetch dashboard data
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (fetchStartDate?: string, fetchEndDate?: string) => {
     setRefreshing(true);
     try {
-      // Make sure we're using the latest state values
-      const currentStartDate = startDate;
-      const currentEndDate = endDate;
+      // Use provided dates or fall back to state values
+      const currentStartDate = fetchStartDate || startDate;
+      const currentEndDate = fetchEndDate || endDate;
       
       console.log("Fetching dashboard data with date range:", currentStartDate, currentEndDate);
       
@@ -210,22 +210,25 @@ export default function DashboardPage() {
   }, [startDate, endDate]);
 
   // Handle date range changes
-  const handleDateRangeApply = () => {
-    console.log("Applying date range:", startDate, endDate);
+  const handleDateRangeApply = (newStartDate?: string, newEndDate?: string) => {
+    // Use the dates passed directly from the DateRangePicker if available
+    const currentStartDate = newStartDate || selectedDateRef.current.startDate;
+    const currentEndDate = newEndDate || selectedDateRef.current.endDate;
+    
+    console.log("Applying date range:", currentStartDate, currentEndDate);
+    
+    // Ensure state is updated with the current values
+    setStartDate(currentStartDate);
+    setEndDate(currentEndDate);
     
     // Update the ref with the selected date range
     selectedDateRef.current = {
-      startDate,
-      endDate
+      startDate: currentStartDate,
+      endDate: currentEndDate
     };
     
-    // Ensure we're using the latest state values, not the ref values
-    // This ensures the API calls use the correct date range
-    setStartDate(startDate);
-    setEndDate(endDate);
-    
     // Fetch data with the selected date range
-    fetchDashboardData();
+    fetchDashboardData(currentStartDate, currentEndDate);
   };
 
   const handleDateRangeClear = () => {
@@ -242,8 +245,8 @@ export default function DashboardPage() {
       endDate: today
     };
     
-    // Then fetch data
-    fetchDashboardData();
+    // Then fetch data with today's date
+    fetchDashboardData(today, today);
   };
 
   if (isLoading && !refreshing) return <DashboardLoading />;
@@ -259,7 +262,7 @@ export default function DashboardPage() {
           <Button
             variant="outline"
             size="icon"
-            onClick={fetchDashboardData}
+            onClick={() => fetchDashboardData()}
             disabled={isLoading || refreshing}
             className="ml-2"
           >
