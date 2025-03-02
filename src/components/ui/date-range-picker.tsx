@@ -97,7 +97,7 @@ export function DateRangePicker({
             }}
             size="sm"
           >
-            Clear
+            Reset
           </Button>
           <Button 
             onClick={() => {

@@ -49,12 +49,18 @@ export function DashboardFilter({
   };
 
   const handleClearFilter = () => {
+    // Reset to last 7 days
     const today = new Date().toISOString().split('T')[0];
-    setLocalStartDate(today);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // -6 to include today (total of 7 days)
+    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+    
+    setLocalStartDate(sevenDaysAgoStr);
     setLocalEndDate(today);
-    onDateChange(today, today);
-    // Trigger a refresh immediately after clearing dates with today's date
-    handleRefresh(today, today);
+    onDateChange(sevenDaysAgoStr, today);
+    
+    // Trigger a refresh immediately after clearing dates with the 7-day range
+    handleRefresh(sevenDaysAgoStr, today);
   };
 
   const handleRefresh = async (refreshStartDate?: string, refreshEndDate?: string) => {

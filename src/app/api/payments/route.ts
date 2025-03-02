@@ -57,10 +57,17 @@ export const GET = withAuth(async (req: NextRequest) => {
   }
   
   if (startDate && endDate) {
+    // Create end date plus one day to include the entire end date
+    const endDateObj = new Date(endDate);
+    const endDatePlusOne = new Date(endDateObj);
+    endDatePlusOne.setDate(endDatePlusOne.getDate() + 1);
+    
     where.createdAt = {
       gte: new Date(startDate),
-      lte: new Date(endDate)
+      lte: endDatePlusOne
     };
+    
+    console.log("Filtering by date range:", startDate, "to", endDate, "(+1 day for inclusive end date)");
   }
 
   try {

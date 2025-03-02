@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { StatCard } from "@/components/dashboard/stat-card";
+import { EnhancedStatCard } from "@/components/dashboard/enhanced-stat-card";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { DashboardLoading, DashboardError } from "@/components/dashboard/loading";
-import { SalesInventoryChart } from "@/components/dashboard/sales-inventory-chart";
+import { AdvancedSalesChart } from "@/components/dashboard/advanced-sales-chart";
 import { CreditReport } from "@/components/dashboard/credit-report";
-import { PaymentChart } from "@/components/finance/payment-chart";
+import { CreditManagementTable } from "@/components/dashboard/credit-management-table";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { ArrowRight, RefreshCw } from "lucide-react";
@@ -61,35 +61,36 @@ interface DashboardStats {
   endDate: string;
 }
 
-interface Payment {
+interface Client {
   id: string;
-  amount: number;
-  paymentMethod: string;
-  status: string;
-  createdAt: string;
-  transaction?: {
-    type: string;
-  };
+  name: string;
+  totalDue: number;
+  amountPaid: number;
+  balance: number;
+  lastPaymentDate?: string;
 }
 
 export default function DashboardPage() {
-  // Initialize with today's date
+  // Initialize with today's date and 7 days ago
   const today = new Date().toISOString().split('T')[0];
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // -6 to include today (total of 7 days)
+  const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
   
   // State for date range
-  const [startDate, setStartDate] = useState<string>(today);
+  const [startDate, setStartDate] = useState<string>(sevenDaysAgoStr);
   const [endDate, setEndDate] = useState<string>(today);
   
   // State for dashboard data
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   // Store the selected date range in a ref to prevent it from being lost during re-renders
   const selectedDateRef = useRef({
-    startDate: today,
+    startDate: sevenDaysAgoStr,
     endDate: today
   });
 
@@ -125,26 +126,24 @@ export default function DashboardPage() {
         throw new Error(statsData.error || "Failed to fetch dashboard stats");
       }
 
-      // Fetch payments
-      const paymentsUrl = new URL("/api/payments", window.location.origin);
-      paymentsUrl.searchParams.append("startDate", currentStartDate);
-      paymentsUrl.searchParams.append("endDate", currentEndDate);
-      paymentsUrl.searchParams.append("_t", Date.now().toString()); // Prevent caching
+      // Fetch clients
+      const clientsUrl = new URL("/api/clients", window.location.origin);
+      clientsUrl.searchParams.append("_t", Date.now().toString()); // Prevent caching
 
-      console.log("Fetching payments from URL:", paymentsUrl.toString());
+      console.log("Fetching clients from URL:", clientsUrl.toString());
 
-      const paymentsResponse = await fetch(paymentsUrl.toString(), {
+      const clientsResponse = await fetch(clientsUrl.toString(), {
         cache: 'no-store'
       });
 
-      if (!paymentsResponse.ok) {
-        throw new Error("Failed to fetch payments");
+      if (!clientsResponse.ok) {
+        throw new Error("Failed to fetch clients");
       }
 
-      const paymentsData = await paymentsResponse.json();
+      const clientsData = await clientsResponse.json();
       
-      if (!paymentsData.success) {
-        throw new Error(paymentsData.error || "Failed to fetch payments");
+      if (!clientsData.success) {
+        throw new Error(clientsData.error || "Failed to fetch clients");
       }
 
       // Update state with fetched data
@@ -180,8 +179,13 @@ export default function DashboardPage() {
         startDate: currentStartDate,
         endDate: currentEndDate,
       });
-
-      setPayments(Array.isArray(paymentsData.data?.items) ? paymentsData.data.items : []);
+      
+      // Filter clients with balance > 0
+      const clientsWithBalance = Array.isArray(clientsData.data?.items) 
+        ? clientsData.data.items.filter((client: Client) => client.balance > 0)
+        : [];
+      
+      setClients(clientsWithBalance);
       
       console.log("Dashboard data fetched successfully");
     } catch (err) {
@@ -195,7 +199,8 @@ export default function DashboardPage() {
 
   // Fetch data only when component mounts
   useEffect(() => {
-    fetchDashboardData();
+    // Pass the initial date range (last 7 days) directly to fetchDashboardData
+    fetchDashboardData(sevenDaysAgoStr, today);
     // We don't include startDate or endDate in the dependency array
     // to prevent infinite loops, as we're explicitly calling fetchDashboardData
     // in handleDateRangeApply and handleDateRangeClear
@@ -232,26 +237,44 @@ export default function DashboardPage() {
   };
 
   const handleDateRangeClear = () => {
+    // Reset to last 7 days
     const today = new Date().toISOString().split('T')[0];
-    console.log("Clearing date range to today:", today);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // -6 to include today (total of 7 days)
+    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+    
+    console.log("Resetting date range to last 7 days:", sevenDaysAgoStr, "to", today);
     
     // Update state first
-    setStartDate(today);
+    setStartDate(sevenDaysAgoStr);
     setEndDate(today);
     
-    // Update the ref with today's date
+    // Update the ref with the 7-day range
     selectedDateRef.current = {
-      startDate: today,
+      startDate: sevenDaysAgoStr,
       endDate: today
     };
     
-    // Then fetch data with today's date
-    fetchDashboardData(today, today);
+    // Then fetch data with the 7-day range
+    fetchDashboardData(sevenDaysAgoStr, today);
   };
 
   if (isLoading && !refreshing) return <DashboardLoading />;
   if (error) return <DashboardError message={error.message} />;
   if (!stats) return null;
+
+  // Calculate trends for enhanced stat cards (simple example)
+  const productsTrend = { value: 5, label: "vs last week" }; // Placeholder
+  const salesTrend = { value: 12, label: "vs last week" }; // Placeholder
+  const profitTrend = { value: 8, label: "vs last week" }; // Placeholder
+
+  // Generate sparkline data (placeholder)
+  const generateSparklineData = (baseValue: number, count: number = 7) => {
+    return Array.from({ length: count }, (_, i) => ({
+      value: baseValue * (0.9 + Math.random() * 0.2),
+      date: new Date(Date.now() - (count - i) * 86400000).toISOString().split('T')[0]
+    }));
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -262,7 +285,7 @@ export default function DashboardPage() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => fetchDashboardData()}
+            onClick={() => fetchDashboardData(startDate, endDate)}
             disabled={isLoading || refreshing}
             className="ml-2"
           >
@@ -283,77 +306,82 @@ export default function DashboardPage() {
 
       {/* Inventory Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
+        <EnhancedStatCard
           title="Total Products"
           value={stats.totalProducts ?? 0}
-          icon={<Package2Icon />}
+          icon={<Package2Icon className="text-blue-500" />}
+          trend={productsTrend}
+          sparklineData={generateSparklineData(stats.totalProducts)}
         />
-        <StatCard
+        <EnhancedStatCard
           title="Low Stock Products"
           value={stats.lowStockProducts ?? 0}
-          icon={<AlertTriangleIcon />}
-          className={
-            (stats.lowStockProducts ?? 0) > 0 ? "border-yellow-500 border-2" : ""
-          }
+          icon={<AlertTriangleIcon className="text-amber-500" />}
         />
-        <StatCard
+        <EnhancedStatCard
           title="Total Suppliers"
           value={stats.totalSuppliers ?? 0}
-          icon={<UsersIcon />}
+          icon={<UsersIcon className="text-indigo-500" />}
+          sparklineData={generateSparklineData(stats.totalSuppliers)}
         />
-        <StatCard
+        <EnhancedStatCard
           title="Total Categories"
           value={stats.totalCategories ?? 0}
-          icon={<FolderIcon />}
+          icon={<FolderIcon className="text-purple-500" />}
         />
       </div>
 
       {/* Financial Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard
+        <EnhancedStatCard
           title="Total Sales"
           value={`DH ${(stats.totalSales ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={<TrendingUpIcon />}
+          icon={<TrendingUpIcon className="text-emerald-500" />}
+          trend={salesTrend}
+          sparklineData={generateSparklineData(stats.totalSales)}
           className="lg:col-span-1"
         />
-        <StatCard
+        <EnhancedStatCard
           title="Total Purchases"
           value={`DH ${(stats.totalPurchases ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={<TrendingDownIcon />}
+          icon={<TrendingDownIcon className="text-pink-500" />}
+          sparklineData={generateSparklineData(stats.totalPurchases)}
           className="lg:col-span-1"
         />
-        <StatCard
+        <EnhancedStatCard
           title="Total Stock Value"
           value={`DH ${(stats.stockValue ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={<ArchiveIcon />}
+          icon={<ArchiveIcon className="text-cyan-500" />}
           className="lg:col-span-1"
         />
       </div>
 
       {/* Profit Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard
+        <EnhancedStatCard
           title="Total Received"
           value={`DH ${(stats.totalReceived ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={<DollarSignIcon />}
+          icon={<DollarSignIcon className="text-green-500" />}
           className="md:col-span-1"
         />
-        <StatCard
+        <EnhancedStatCard
           title="Total Paid"
           value={`DH ${(stats.totalPaid ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={<CreditCardIcon />}
+          icon={<CreditCardIcon className="text-orange-500" />}
           className="md:col-span-1"
         />
-        <StatCard
+        <EnhancedStatCard
           title="Profit"
           value={`DH ${(stats.profit ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={<PercentIcon />}
+          icon={<PercentIcon className="text-violet-500" />}
+          trend={profitTrend}
+          sparklineData={generateSparklineData(stats.profit)}
           className="md:col-span-1"
         />
       </div>
 
-      {/* Sales & Inventory Chart */}
-      <SalesInventoryChart 
+      {/* Advanced Sales & Inventory Chart */}
+      <AdvancedSalesChart 
         transactions={stats.recentTransactions ?? []}
         dateRange={{
           startDate: stats.startDate,
@@ -363,6 +391,27 @@ export default function DashboardPage() {
         totalPurchases={stats.totalPurchases ?? 0}
         profit={stats.profit ?? 0}
       />
+
+      {/* Credit Management Table */}
+      <Card className="shadow-md border-0">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-xl font-semibold">Client Credit Management</CardTitle>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-sm"
+              onClick={() => window.location.href = '/clients'}
+            >
+              View All Clients
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <CreditManagementTable clients={clients} />
+        </CardContent>
+      </Card>
 
       {/* Credit Report & Recent Transactions */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -411,33 +460,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Payment Analytics */}
-      <Card className="shadow-md border-0">
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-xl font-semibold">Payment Analytics</CardTitle>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-sm"
-              onClick={() => window.location.href = '/finance'}
-            >
-              View Finance
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <PaymentChart 
-            payments={payments}
-            dateRange={{
-              startDate: stats.startDate,
-              endDate: stats.endDate
-            }}
-          />
-        </CardContent>
-      </Card>
     </div>
   );
 }
