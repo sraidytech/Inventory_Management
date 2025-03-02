@@ -52,8 +52,11 @@ export default function NotificationsPage() {
 
       const data = await response.json();
       
-      if (data.success) {
+      if (data.success && data.data && Array.isArray(data.data.items)) {
         setNotifications(data.data.items);
+      } else {
+        // Handle case when items array is not available
+        setNotifications([]);
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
