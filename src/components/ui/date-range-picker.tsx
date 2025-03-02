@@ -42,7 +42,11 @@ export function DateRangePicker({
     from && to ? { from, to } : undefined
   )
   
-  // We'll only update parent component when Apply button is clicked
+  // Update local state when date range changes in the calendar
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDate(range);
+    console.log("Date range selected in calendar:", range);
+  }
   
   // Format date for display
   const formatDisplayDate = (dateStr: string) => {
@@ -79,7 +83,7 @@ export function DateRangePicker({
           mode="range"
           defaultMonth={from}
           selected={date}
-          onSelect={setDate}
+          onSelect={handleDateRangeChange}
           numberOfMonths={2}
           className="rounded-md border"
         />
@@ -97,14 +101,24 @@ export function DateRangePicker({
           </Button>
           <Button 
             onClick={() => {
-              if (date?.from) {
-                onStartDateChange(format(date.from, "yyyy-MM-dd"))
+              if (date?.from && date?.to) {
+                const formattedFrom = format(date.from, "yyyy-MM-dd");
+                const formattedTo = format(date.to, "yyyy-MM-dd");
+                
+                console.log("Applying date range:", formattedFrom, formattedTo);
+                
+                // First update the parent component's state with the selected dates
+                if (onStartDateChange) onStartDateChange(formattedFrom);
+                if (onEndDateChange) onEndDateChange(formattedTo);
+                
+                // Close the popover
+                setOpen(false);
+                
+                // Then trigger the apply callback after a short delay to ensure state is updated
+                setTimeout(() => {
+                  if (onApply) onApply();
+                }, 50);
               }
-              if (date?.to) {
-                onEndDateChange(format(date.to, "yyyy-MM-dd"))
-              }
-              onApply()
-              setOpen(false)
             }}
             disabled={!date?.from || !date?.to}
             size="sm"
