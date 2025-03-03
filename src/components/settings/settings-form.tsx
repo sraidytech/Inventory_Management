@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { userSettingsFormSchema } from "@/lib/validations";
 import {
   Form,
   FormControl,
@@ -33,21 +33,18 @@ const toast = {
   }
 };
 
-// Define the form schema
-const formSchema = z.object({
-  language: z.enum(["en", "ar"]),
-  theme: z.enum(["light", "dark"]),
-  notifications: z.boolean(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = {
+  language: "en" | "ar";
+  theme: "light" | "dark";
+  notifications: boolean;
+};
 
 export function SettingsForm() {
   const [loading, setLoading] = useState(false);
 
   // Initialize form with default values
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(userSettingsFormSchema),
     defaultValues: {
       language: "en",
       theme: "light",

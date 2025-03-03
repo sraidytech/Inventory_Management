@@ -122,6 +122,12 @@ export const userSettingsSchema = z.object({
   notifications: z.boolean().default(true),
 });
 
+export const userSettingsFormSchema = z.object({
+  language: z.enum(["en", "ar"]).default("en"),
+  theme: z.enum(["light", "dark"]).default("light"),
+  notifications: z.boolean().default(true),
+});
+
 export type ProductInput = z.infer<typeof productSchema>;
 export type CategoryInput = z.infer<typeof categorySchema>;
 export type SupplierInput = z.infer<typeof supplierSchema>;

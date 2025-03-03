@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { userSettingsSchema } from "@/lib/validations";
+import { userSettingsFormSchema } from "@/lib/validations";
 import { withAuth, withValidation } from "@/lib/api-middleware";
 
 // GET /api/user-settings
@@ -27,23 +27,29 @@ export const GET = withAuth(async (req: NextRequest, _, userId) => {
 
 // PUT /api/user-settings
 export const PUT = withValidation(
-  userSettingsSchema,
+  userSettingsFormSchema,
   async (req: NextRequest, _, userId) => {
     const data = await req.json();
+    
+    // Add userId to the data
+    const settingsData = {
+      ...data,
+      userId
+    };
 
     const settings = await prisma.userSettings.upsert({
       where: { userId },
       create: {
         id: userId,
         userId,
-        language: data.language,
-        theme: data.theme,
-        notifications: data.notifications,
+        language: settingsData.language,
+        theme: settingsData.theme,
+        notifications: settingsData.notifications,
       },
       update: {
-        language: data.language,
-        theme: data.theme,
-        notifications: data.notifications,
+        language: settingsData.language,
+        theme: settingsData.theme,
+        notifications: settingsData.notifications,
       },
     });
 
