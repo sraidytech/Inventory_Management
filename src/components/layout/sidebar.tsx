@@ -110,7 +110,7 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
   return (
     <TooltipProvider delayDuration={0}>
       <div 
-        className="relative space-y-4 py-4 flex flex-col h-full bg-[#111827] text-white"
+        className="relative space-y-4 py-4 flex flex-col h-full bg-gray-100 dark:bg-[#111827] text-gray-800 dark:text-white"
         role="navigation"
         aria-label="Main Navigation"
       >
@@ -129,7 +129,7 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                 onClick={() => onCollapse(!isCollapsed)} 
                 variant="ghost" 
                 size="icon"
-                className="h-8 w-8 p-0 hover:bg-white/10"
+                className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-white/10"
                 aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                 aria-expanded={!isCollapsed}
               >
@@ -148,8 +148,8 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                           <button
                             onClick={() => toggleExpand(route.label)}
                             className={cn(
-                              "text-sm group flex p-3 w-full font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200",
-                              isRouteActive(route.href) ? "text-white bg-white/10" : "text-zinc-400",
+                              "text-sm group flex p-3 w-full font-medium cursor-pointer hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-all duration-200",
+                              isRouteActive(route.href) ? "text-gray-900 dark:text-white bg-gray-200 dark:bg-white/10" : "text-gray-600 dark:text-zinc-400",
                               isCollapsed ? "justify-center px-2" : "justify-start px-3"
                             )}
                             aria-expanded={expandedRoutes.includes(route.label)}
@@ -192,8 +192,8 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                               <Link
                                 href={subRoute.href}
                                 className={cn(
-                                  "text-sm group flex p-2 w-full font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200",
-                                  pathname === subRoute.href ? "text-white bg-white/10" : "text-zinc-400",
+                                  "text-sm group flex p-2 w-full font-medium cursor-pointer hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-all duration-200",
+                                  pathname === subRoute.href ? "text-gray-900 dark:text-white bg-gray-200 dark:bg-white/10" : "text-gray-600 dark:text-zinc-400",
                                 )}
                                 aria-current={pathname === subRoute.href ? "page" : undefined}
                               >
@@ -218,8 +218,8 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                         <Link
                           href={route.href}
                           className={cn(
-                            "text-sm group flex p-3 w-full font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200",
-                            pathname === route.href ? "text-white bg-white/10" : "text-zinc-400",
+                            "text-sm group flex p-3 w-full font-medium cursor-pointer hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-all duration-200",
+                            pathname === route.href ? "text-gray-900 dark:text-white bg-gray-200 dark:bg-white/10" : "text-gray-600 dark:text-zinc-400",
                             isCollapsed ? "justify-center px-2" : "justify-start px-3"
                           )}
                           aria-current={pathname === route.href ? "page" : undefined}

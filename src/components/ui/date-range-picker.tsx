@@ -69,7 +69,7 @@ export function DateRangePicker({
           size="sm"
           className={cn(
             "flex items-center gap-1",
-            hasDateRange && "bg-blue-50 border-blue-200",
+            hasDateRange && "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800",
             className
           )}
         >

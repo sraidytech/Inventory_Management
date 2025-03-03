@@ -67,9 +67,9 @@ export function CreditManagementTable({ clients }: CreditManagementTableProps) {
 
   // Get color based on credit health score
   const getCreditHealthColor = (score: number) => {
-    if (score >= 80) return "bg-green-100 text-green-800";
-    if (score >= 50) return "bg-yellow-100 text-yellow-800";
-    return "bg-red-100 text-red-800";
+    if (score >= 80) return "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100";
+    if (score >= 50) return "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100";
+    return "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100";
   };
 
   // Format currency
@@ -100,7 +100,7 @@ export function CreditManagementTable({ clients }: CreditManagementTableProps) {
         </div>
       </div>
       
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

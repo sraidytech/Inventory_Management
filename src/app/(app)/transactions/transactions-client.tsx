@@ -197,11 +197,11 @@ export function TransactionsClient() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "COMPLETED":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100";
       case "CANCELLED":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100";
       default:
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100";
     }
   };
 
@@ -367,15 +367,15 @@ export function TransactionsClient() {
                   </tr>
                 ) : (
                   filteredTransactions.map((transaction) => (
-                    <tr key={transaction.id} className="bg-white border-b">
+                    <tr key={transaction.id} className="bg-card border-b">
                       <td className="px-6 py-4">{formatDate(transaction.createdAt)}</td>
                       <td className="px-6 py-4">
                         <span className={`flex items-center ${
                           transaction.type === "PURCHASE" 
-                            ? "text-blue-600" 
+                            ? "text-blue-600 dark:text-blue-400" 
                             : transaction.type === "SALE"
-                            ? "text-green-600"
-                            : "text-orange-600"
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-orange-600 dark:text-orange-400"
                         }`}>
                           {transaction.type === "PURCHASE" ? (
                             <ArrowDownRight className="mr-1 h-4 w-4" />

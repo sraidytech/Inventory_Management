@@ -17,6 +17,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTheme } from "@/components/theme/theme-provider";
 // Import toast from a UI library that's available in the project
 // or create a simple toast function
 const toast = {
@@ -54,6 +55,8 @@ export function SettingsForm() {
     },
   });
 
+  const { theme, setTheme: setGlobalTheme } = useTheme();
+
   // Fetch user settings on component mount
   useEffect(() => {
     const fetchSettings = async () => {
@@ -62,9 +65,10 @@ export function SettingsForm() {
         const data = await response.json();
         
         if (data) {
+          // Use the global theme state as the default if available
           form.reset({
             language: data.language || "en",
-            theme: data.theme || "light",
+            theme: data.theme || theme,
             notifications: data.notifications !== undefined ? data.notifications : true,
           });
         }
@@ -74,7 +78,7 @@ export function SettingsForm() {
     };
 
     fetchSettings();
-  }, [form]);
+  }, [form, theme]);
 
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
@@ -91,12 +95,8 @@ export function SettingsForm() {
       if (response.ok) {
         toast.success("Settings updated successfully");
         
-        // Update theme in localStorage and document if it changed
-        const currentTheme = localStorage.getItem("theme");
-        if (currentTheme !== values.theme) {
-          localStorage.setItem("theme", values.theme);
-          document.documentElement.classList.toggle("dark", values.theme === "dark");
-        }
+        // Update global theme state if it changed
+        setGlobalTheme(values.theme);
       } else {
         toast.error("Failed to update settings");
       }

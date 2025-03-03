@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { ClerkProvider } from "@clerk/nextjs"
 import { Toaster } from "sonner"
+import { ThemeProvider } from "@/components/theme/theme-provider"
+import { ThemeScript } from "@/components/theme/theme-script"
+import { ThemeScriptServer } from "@/components/theme/theme-script-server"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,7 +22,7 @@ export const metadata: Metadata = {
   description: "A comprehensive inventory management system",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
@@ -27,9 +30,15 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
+        <head>
+          <ThemeScriptServer />
+          <ThemeScript />
+        </head>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          {children}
-          <Toaster />
+          <ThemeProvider>
+            {children}
+            <Toaster />
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

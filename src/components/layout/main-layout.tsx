@@ -12,7 +12,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     <div className="h-full relative">
       {/* Desktop Sidebar */}
       <div className={cn(
-        "hidden h-full md:flex md:flex-col md:fixed md:inset-y-0 z-[80] bg-gray-900",
+        "hidden h-full md:flex md:flex-col md:fixed md:inset-y-0 z-[80]",
         "transition-all duration-300 ease-in-out transform",
         isCollapsed ? "md:w-16" : "md:w-72"
       )}>

@@ -1,36 +1,19 @@
 "use client"
 
 import { UserButton } from "@clerk/nextjs"
-import { Sun, Moon, Menu } from "lucide-react"
+import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { Sidebar } from "./sidebar"
 import { NotificationDropdown } from "./notification-dropdown"
 import { useClickOutside } from "@/hooks/use-click-outside"
 import { useSwipe } from "@/hooks/use-swipe"
+import { ThemeToggle } from "@/components/theme/theme-toggle"
 
 export function Header() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [theme, setTheme] = useState<"light" | "dark">("light")
   const sidebarRef = useRef<HTMLDivElement>(null)
-
-  // Load theme from localStorage on component mount
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null
-    if (savedTheme) {
-      setTheme(savedTheme)
-      document.documentElement.classList.toggle("dark", savedTheme === "dark")
-    }
-  }, [])
-
-  // Toggle theme function
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light"
-    setTheme(newTheme)
-    localStorage.setItem("theme", newTheme)
-    document.documentElement.classList.toggle("dark", newTheme === "dark")
-  }
 
   useClickOutside(sidebarRef, () => {
     if (showMobileMenu) {
@@ -63,18 +46,7 @@ export function Header() {
           </Button>
           <div className="ml-auto flex items-center space-x-4">
             <NotificationDropdown />
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={toggleTheme}
-              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            >
-              {theme === "light" ? (
-                <Moon className="h-5 w-5" />
-              ) : (
-                <Sun className="h-5 w-5" />
-              )}
-            </Button>
+            <ThemeToggle />
             <UserButton afterSignOutUrl="/sign-in" />
           </div>
         </div>
@@ -94,7 +66,7 @@ export function Header() {
       <div
         ref={sidebarRef}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 bg-gray-900 md:hidden",
+          "fixed inset-y-0 left-0 z-50 w-72 md:hidden",
           "transform transition-transform duration-300 ease-in-out",
           "touch-pan-y", // Enable vertical scrolling while preventing horizontal
           showMobileMenu ? "translate-x-0" : "-translate-x-full"
@@ -108,7 +80,7 @@ export function Header() {
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-2 top-2 text-white hover:bg-white/10"
+          className="absolute right-2 top-2 text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-white/10"
           onClick={() => setShowMobileMenu(false)}
         >
           <span className="sr-only">Close menu</span>
