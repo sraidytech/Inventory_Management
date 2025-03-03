@@ -1,0 +1,110 @@
+/* RTL Support Styles */
+
+/* Set text alignment for RTL */
+[dir="rtl"] {
+  text-align: right;
+}
+
+/* Flip margins and paddings */
+[dir="rtl"] .ml-3 {
+  margin-left: 0;
+  margin-right: 0.75rem;
+}
+
+[dir="rtl"] .mr-2 {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+[dir="rtl"] .mr-3 {
+  margin-right: 0;
+  margin-left: 0.75rem;
+}
+
+[dir="rtl"] .ml-auto {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+[dir="rtl"] .pl-4 {
+  padding-left: 0;
+  padding-right: 1rem;
+}
+
+[dir="rtl"] .pr-4 {
+  padding-right: 0;
+  padding-left: 1rem;
+}
+
+/* Flip flex directions */
+[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
+}
+
+/* Flip transforms */
+[dir="rtl"] .translate-x-full {
+  transform: translateX(-100%);
+}
+
+[dir="rtl"] .-translate-x-full {
+  transform: translateX(100%);
+}
+
+/* Flip positions */
+[dir="rtl"] .left-0 {
+  left: auto;
+  right: 0;
+}
+
+[dir="rtl"] .right-0 {
+  right: auto;
+  left: 0;
+}
+
+[dir="rtl"] .right-2 {
+  right: auto;
+  left: 0.5rem;
+}
+
+[dir="rtl"] .left-2 {
+  left: auto;
+  right: 0.5rem;
+}
+
+/* Font family for Arabic text */
+[dir="rtl"] body {
+  font-family: var(--font-tajawal), sans-serif;
+}
+
+/* Fix for dropdown menus */
+[dir="rtl"] .dropdown-menu {
+  transform-origin: top right;
+}
+
+/* Fix for charts */
+[dir="rtl"] .recharts-wrapper {
+  direction: ltr;
+}
+
+/* Fix for tables */
+[dir="rtl"] th, [dir="rtl"] td {
+  text-align: right;
+}
+
+/* Fix for form elements */
+[dir="rtl"] input, [dir="rtl"] textarea, [dir="rtl"] select {
+  text-align: right;
+}
+
+/* Fix for buttons with icons */
+[dir="rtl"] button svg + span, 
+[dir="rtl"] a svg + span {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+/* Fix for sidebar */
+[dir="rtl"] .sidebar {
+  right: 0;
+  left: auto;
+}

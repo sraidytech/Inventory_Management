@@ -5,6 +5,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { LucideIcon } from "lucide-react"
+import { TranslatedText } from "@/components/language/translated-text"
+import { useLanguage } from "@/components/language/language-provider"
 
 interface RouteItem {
   label: string;
@@ -94,6 +96,7 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarProps) {
   const pathname = usePathname();
   const [expandedRoutes, setExpandedRoutes] = useState<string[]>([]);
+  const { isRTL } = useLanguage();
 
   const toggleExpand = (label: string) => {
     setExpandedRoutes((prev: string[]) => 
@@ -121,7 +124,7 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
           )}>
             {!isCollapsed && (
               <h1 className="font-bold text-2xl">
-                Inventory Management
+                <TranslatedText namespace="app" id="title" />
               </h1>
             )}
             {!isMobile && (
@@ -165,7 +168,7 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                               {!isCollapsed && (
                                 <>
                                   <span className="ml-3 flex-1 transition-all duration-300">
-                                    {route.label}
+                                    <TranslatedText namespace="common" id={route.label.toLowerCase()} />
                                   </span>
                                   <ChevronDown 
                                     className={cn(
@@ -179,8 +182,8 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                           </button>
                         </TooltipTrigger>
                         {isCollapsed && !isMobile && (
-                          <TooltipContent side="right">
-                            {route.label}
+                          <TooltipContent side={isRTL ? "left" : "right"}>
+                            <TranslatedText namespace="common" id={route.label.toLowerCase()} />
                           </TooltipContent>
                         )}
                       </TooltipRoot>
@@ -234,15 +237,15 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                             />
                             {!isCollapsed && (
                               <span className="ml-3 transition-all duration-300">
-                                {route.label}
+                                <TranslatedText namespace="common" id={route.label.toLowerCase()} />
                               </span>
                             )}
                           </div>
                         </Link>
                       </TooltipTrigger>
                       {isCollapsed && !isMobile && (
-                        <TooltipContent side="right">
-                          {route.label}
+                        <TooltipContent side={isRTL ? "left" : "right"}>
+                          <TranslatedText namespace="common" id={route.label.toLowerCase()} />
                         </TooltipContent>
                       )}
                     </TooltipRoot>

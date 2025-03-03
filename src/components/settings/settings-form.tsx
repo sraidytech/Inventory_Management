@@ -18,20 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTheme } from "@/components/theme/theme-provider";
-// Import toast from a UI library that's available in the project
-// or create a simple toast function
-const toast = {
-  success: (message: string) => {
-    console.log('Success:', message);
-    // You can replace this with a proper toast implementation
-    alert(message);
-  },
-  error: (message: string) => {
-    console.error('Error:', message);
-    // You can replace this with a proper toast implementation
-    alert(message);
-  }
-};
+import { useLanguage } from "@/components/language/language-provider";
+import { toast } from "sonner";
 
 type FormValues = {
   language: "en" | "ar";
@@ -41,6 +29,8 @@ type FormValues = {
 
 export function SettingsForm() {
   const [loading, setLoading] = useState(false);
+  const { theme, setTheme: setGlobalTheme } = useTheme();
+  const { language, setLanguage: setGlobalLanguage } = useLanguage();
 
   // Initialize form with default values
   const form = useForm<FormValues>({
@@ -52,8 +42,6 @@ export function SettingsForm() {
     },
   });
 
-  const { theme, setTheme: setGlobalTheme } = useTheme();
-
   // Fetch user settings on component mount
   useEffect(() => {
     const fetchSettings = async () => {
@@ -62,9 +50,9 @@ export function SettingsForm() {
         const data = await response.json();
         
         if (data) {
-          // Use the global theme state as the default if available
+          // Use the global states as defaults if available
           form.reset({
-            language: data.language || "en",
+            language: data.language || language,
             theme: data.theme || theme,
             notifications: data.notifications !== undefined ? data.notifications : true,
           });
@@ -75,7 +63,7 @@ export function SettingsForm() {
     };
 
     fetchSettings();
-  }, [form, theme]);
+  }, [form, theme, language]);
 
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
@@ -92,8 +80,14 @@ export function SettingsForm() {
       if (response.ok) {
         toast.success("Settings updated successfully");
         
-        // Update global theme state if it changed
-        setGlobalTheme(values.theme);
+        // Update global states if they changed
+        if (values.theme !== theme) {
+          setGlobalTheme(values.theme);
+        }
+        
+        if (values.language !== language) {
+          setGlobalLanguage(values.language);
+        }
       } else {
         toast.error("Failed to update settings");
       }
@@ -134,7 +128,7 @@ export function SettingsForm() {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="ar">Arabic</SelectItem>
+                      <SelectItem value="ar">العربية</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>

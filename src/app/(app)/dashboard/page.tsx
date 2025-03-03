@@ -11,6 +11,7 @@ import { CreditManagementTable } from "@/components/dashboard/credit-management-
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { ArrowRight, RefreshCw } from "lucide-react";
+import { TranslatedText } from "@/components/language/translated-text";
 import {
   Package2Icon,
   AlertTriangleIcon,
@@ -281,7 +282,9 @@ export default function DashboardPage() {
       {/* Dashboard Header with Date Filter */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl font-bold">
+            <TranslatedText namespace="common" id="dashboard" />
+          </h1>
           <Button
             variant="outline"
             size="icon"
@@ -396,7 +399,9 @@ export default function DashboardPage() {
       <Card className="shadow-md border-0">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-center">
-            <CardTitle className="text-xl font-semibold">Client Credit Management</CardTitle>
+            <CardTitle className="text-xl font-semibold">
+              <TranslatedText namespace="dashboard" id="creditManagement" />
+            </CardTitle>
             <Button 
               variant="ghost" 
               size="sm" 

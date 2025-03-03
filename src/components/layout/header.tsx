@@ -10,10 +10,13 @@ import { NotificationDropdown } from "./notification-dropdown"
 import { useClickOutside } from "@/hooks/use-click-outside"
 import { useSwipe } from "@/hooks/use-swipe"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
+import { LanguageToggle } from "@/components/language/language-toggle"
+import { useLanguage } from "@/components/language/language-provider"
 
 export function Header() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
+  const { isRTL } = useLanguage()
 
   useClickOutside(sidebarRef, () => {
     if (showMobileMenu) {
@@ -24,7 +27,12 @@ export function Header() {
   useSwipe({
     ref: sidebarRef,
     onSwipeLeft: () => {
-      if (showMobileMenu) {
+      if (showMobileMenu && !isRTL) {
+        setShowMobileMenu(false)
+      }
+    },
+    onSwipeRight: () => {
+      if (showMobileMenu && isRTL) {
         setShowMobileMenu(false)
       }
     }
@@ -46,6 +54,7 @@ export function Header() {
           </Button>
           <div className="ml-auto flex items-center space-x-4">
             <NotificationDropdown />
+            <LanguageToggle />
             <ThemeToggle />
             <UserButton afterSignOutUrl="/sign-in" />
           </div>
@@ -66,10 +75,11 @@ export function Header() {
       <div
         ref={sidebarRef}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 md:hidden",
+          "fixed inset-y-0 z-50 w-72 md:hidden",
           "transform transition-transform duration-300 ease-in-out",
           "touch-pan-y", // Enable vertical scrolling while preventing horizontal
-          showMobileMenu ? "translate-x-0" : "-translate-x-full"
+          showMobileMenu ? "translate-x-0" : isRTL ? "translate-x-full" : "-translate-x-full",
+          isRTL ? "right-0" : "left-0"
         )}
       >
         <Sidebar 
@@ -80,7 +90,10 @@ export function Header() {
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-2 top-2 text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-white/10"
+          className={cn(
+            "absolute top-2 text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-white/10",
+            isRTL ? "left-2" : "right-2"
+          )}
           onClick={() => setShowMobileMenu(false)}
         >
           <span className="sr-only">Close menu</span>
