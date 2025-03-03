@@ -45,14 +45,14 @@ export function Header() {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="md:hidden mr-2"
+            className={`md:hidden ${isRTL ? 'ml-2' : 'mr-2'}`}
             onClick={() => setShowMobileMenu(!showMobileMenu)}
             aria-label="Toggle menu"
             aria-expanded={showMobileMenu}
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="ml-auto flex items-center space-x-4">
+          <div className={`${isRTL ? 'mr-auto' : 'ml-auto'} flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-4`}>
             <NotificationDropdown />
             <LanguageToggle />
             <ThemeToggle />

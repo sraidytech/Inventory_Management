@@ -8,6 +8,8 @@ import { Check, Trash2, ExternalLink, Filter } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TranslatedText } from "@/components/language/translated-text";
+import { useLanguage } from "@/components/language/language-provider";
 
 // Define notification types
 type NotificationType = "STOCK_ALERT" | "PAYMENT_DUE" | "PAYMENT_RECEIVED" | "SYSTEM";
@@ -24,6 +26,7 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
+  const { isRTL } = useLanguage();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<NotificationStatus | "ALL">("ALL");
@@ -155,19 +158,19 @@ export default function NotificationsPage() {
     }
   };
 
-  // Get human-readable notification type
-  const getNotificationTypeLabel = (type: NotificationType) => {
+  // Get notification type translation key
+  const getNotificationTypeKey = (type: NotificationType) => {
     switch (type) {
       case "STOCK_ALERT":
-        return "Stock Alert";
+        return "stockAlert";
       case "PAYMENT_DUE":
-        return "Payment Due";
+        return "paymentDue";
       case "PAYMENT_RECEIVED":
-        return "Payment Received";
+        return "paymentReceived";
       case "SYSTEM":
-        return "System";
+        return "system";
       default:
-        return type;
+        return "system";
     }
   };
 
@@ -175,9 +178,11 @@ export default function NotificationsPage() {
     <div className="container mx-auto py-10">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Notifications</h1>
+          <h1 className="text-3xl font-bold">
+            <TranslatedText namespace="notifications" id="title" />
+          </h1>
           <p className="text-muted-foreground mt-2">
-            View and manage your notifications.
+            <TranslatedText namespace="notifications" id="description" />
           </p>
         </div>
         {notifications.length > 0 && activeTab === "UNREAD" && (
@@ -186,8 +191,8 @@ export default function NotificationsPage() {
             onClick={markAllAsRead}
             className="flex items-center gap-2"
           >
-            <Check className="h-4 w-4" />
-            Mark all as read
+            <Check className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+            <TranslatedText namespace="notifications" id="markAllAsRead" />
           </Button>
         )}
       </div>
@@ -195,7 +200,7 @@ export default function NotificationsPage() {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle>All Notifications</CardTitle>
+            <CardTitle><TranslatedText namespace="notifications" id="title" /></CardTitle>
             <div className="flex items-center gap-2">
               <Select
                 value={typeFilter}
@@ -204,21 +209,21 @@ export default function NotificationsPage() {
                 <SelectTrigger className="w-[180px]">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4" />
-                    <SelectValue placeholder="Filter by type" />
+                    <SelectValue placeholder={<TranslatedText namespace="common" id="filter" />} />
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All Types</SelectItem>
-                  <SelectItem value="STOCK_ALERT">Stock Alerts</SelectItem>
-                  <SelectItem value="PAYMENT_DUE">Payment Due</SelectItem>
-                  <SelectItem value="PAYMENT_RECEIVED">Payment Received</SelectItem>
-                  <SelectItem value="SYSTEM">System</SelectItem>
+                  <SelectItem value="ALL"><TranslatedText namespace="common" id="all" /></SelectItem>
+                  <SelectItem value="STOCK_ALERT"><TranslatedText namespace="notifications.types" id="stockAlert" /></SelectItem>
+                  <SelectItem value="PAYMENT_DUE"><TranslatedText namespace="notifications.types" id="paymentDue" /></SelectItem>
+                  <SelectItem value="PAYMENT_RECEIVED"><TranslatedText namespace="notifications.types" id="paymentReceived" /></SelectItem>
+                  <SelectItem value="SYSTEM"><TranslatedText namespace="notifications.types" id="system" /></SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <CardDescription>
-            You have {notifications.filter(n => n.status === "UNREAD").length} unread notifications.
+            <TranslatedText namespace="notifications" id="unreadCount" /> {notifications.filter(n => n.status === "UNREAD").length}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -228,20 +233,20 @@ export default function NotificationsPage() {
             className="w-full"
           >
             <TabsList className="mb-6 grid grid-cols-4 w-full">
-              <TabsTrigger value="ALL">All</TabsTrigger>
-              <TabsTrigger value="UNREAD">Unread</TabsTrigger>
-              <TabsTrigger value="READ">Read</TabsTrigger>
-              <TabsTrigger value="ARCHIVED">Archived</TabsTrigger>
+              <TabsTrigger value="ALL"><TranslatedText namespace="common" id="all" /></TabsTrigger>
+              <TabsTrigger value="UNREAD"><TranslatedText namespace="notifications.status" id="unread" /></TabsTrigger>
+              <TabsTrigger value="READ"><TranslatedText namespace="notifications.status" id="read" /></TabsTrigger>
+              <TabsTrigger value="ARCHIVED"><TranslatedText namespace="notifications.status" id="archived" /></TabsTrigger>
             </TabsList>
 
             <TabsContent value={activeTab}>
               {loading ? (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">Loading notifications...</p>
+                  <p className="text-muted-foreground"><TranslatedText namespace="common" id="loading" /></p>
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">No notifications found.</p>
+                  <p className="text-muted-foreground"><TranslatedText namespace="notifications" id="noNotifications" /></p>
                 </div>
               ) : (
                 <div className="space-y-1">
@@ -254,7 +259,7 @@ export default function NotificationsPage() {
                             <div className="flex items-center gap-2">
                               <h3 className="font-medium">{notification.title}</h3>
                               <span className="text-xs px-2 py-0.5 rounded-full bg-muted-foreground/20 text-muted-foreground">
-                                {getNotificationTypeLabel(notification.type)}
+                                <TranslatedText namespace="notifications.types" id={getNotificationTypeKey(notification.type)} />
                               </span>
                             </div>
                             <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>

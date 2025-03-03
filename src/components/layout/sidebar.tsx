@@ -167,7 +167,7 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                               />
                               {!isCollapsed && (
                                 <>
-                                  <span className="ml-3 flex-1 transition-all duration-300">
+                                  <span className={`${isRTL ? 'mr-3' : 'ml-3'} flex-1 transition-all duration-300`}>
                                     <TranslatedText namespace="common" id={route.label.toLowerCase()} />
                                   </span>
                                   <ChevronDown 
@@ -236,7 +236,7 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                               aria-hidden="true"
                             />
                             {!isCollapsed && (
-                              <span className="ml-3 transition-all duration-300">
+                              <span className={`${isRTL ? 'mr-3' : 'ml-3'} transition-all duration-300`}>
                                 <TranslatedText namespace="common" id={route.label.toLowerCase()} />
                               </span>
                             )}

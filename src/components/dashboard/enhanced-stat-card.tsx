@@ -12,7 +12,7 @@ interface SparklinePoint {
 }
 
 interface EnhancedStatCardProps {
-  title: string;
+  title: string | ReactNode;
   value: string | number;
   icon?: ReactNode;
   trend?: {
@@ -68,24 +68,20 @@ export function EnhancedStatCard({
     if (!sparklineData || sparklineData.length < 2) return null;
     
     // Use consistent colors based on title
-    let chartColor = "#10B981"; // Default green
+    const chartColor = "#10B981"; // Default green
     
-    if (title.includes("Suppliers") || title.includes("Purchases")) {
-      chartColor = "#6366F1"; // Indigo/blue for suppliers and purchases
-    } else if (title.includes("Sales")) {
-      chartColor = "#10B981"; // Green for sales
-    } else if (title.includes("Products")) {
-      chartColor = "#3B82F6"; // Blue for products
-    } else if (title.includes("Profit")) {
-      chartColor = "#10B981"; // Green for profit
-    }
+    // Generate a unique ID for the gradient based on the component instance
+    const uniqueId = Math.random().toString(36).substring(2, 9);
+    
+    // For ReactNode titles, we can't use string methods, so we use a unique ID instead
+    const gradientId = `colorValue-${uniqueId}`;
     
     return (
       <div className="mt-4 h-14">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={sparklineData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
             <defs>
-              <linearGradient id={`colorValue-${title.replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={chartColor} stopOpacity={0.4} />
                 <stop offset="100%" stopColor={chartColor} stopOpacity={0.05} />
               </linearGradient>
@@ -96,7 +92,7 @@ export function EnhancedStatCard({
               stroke={chartColor} 
               strokeWidth={1.5}
               fillOpacity={1}
-              fill={`url(#colorValue-${title.replace(/\s+/g, '')})`}
+              fill={`url(#${gradientId})`}
               dot={false}
               activeDot={false}
               isAnimationActive={false}

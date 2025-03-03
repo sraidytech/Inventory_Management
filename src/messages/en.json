@@ -50,7 +50,16 @@
     "warning": "Warning",
     "info": "Info",
     "inventory": "Inventory",
-    "finance": "Finance"
+    "finance": "Finance",
+    "all": "All",
+    "justNow": "just now",
+    "minute": "minute",
+    "minutes": "minutes",
+    "hour": "hour",
+    "hours": "hours",
+    "day": "day",
+    "days": "days",
+    "ago": "ago"
   },
   "dashboard": {
     "title": "Dashboard",

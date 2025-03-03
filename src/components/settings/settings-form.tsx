@@ -19,6 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useLanguage } from "@/components/language/language-provider";
+import { TranslatedText } from "@/components/language/translated-text";
 import { toast } from "sonner";
 
 type FormValues = {
@@ -78,7 +79,7 @@ export function SettingsForm() {
       });
 
       if (response.ok) {
-        toast.success("Settings updated successfully");
+        toast.success(language === "ar" ? "تم تحديث الإعدادات بنجاح" : "Settings updated successfully");
         
         // Update global states if they changed
         if (values.theme !== theme) {
@@ -89,11 +90,11 @@ export function SettingsForm() {
           setGlobalLanguage(values.language);
         }
       } else {
-        toast.error("Failed to update settings");
+        toast.error(language === "ar" ? "فشل تحديث الإعدادات" : "Failed to update settings");
       }
     } catch (error) {
       console.error("Error updating settings:", error);
-      toast.error("An error occurred while updating settings");
+      toast.error(language === "ar" ? "حدث خطأ أثناء تحديث الإعدادات" : "An error occurred while updating settings");
     } finally {
       setLoading(false);
     }
@@ -102,9 +103,9 @@ export function SettingsForm() {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>User Settings</CardTitle>
+        <CardTitle><TranslatedText namespace="settings" id="title" /></CardTitle>
         <CardDescription>
-          Manage your account settings and preferences.
+          <TranslatedText namespace="settings" id="description" />
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -115,7 +116,7 @@ export function SettingsForm() {
               name="language"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Language</FormLabel>
+                  <FormLabel><TranslatedText namespace="common" id="language" /></FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -123,16 +124,16 @@ export function SettingsForm() {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a language" />
+                      <SelectValue placeholder={<TranslatedText namespace="settings" id="language" />} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="ar">العربية</SelectItem>
+                      <SelectItem value="en"><TranslatedText namespace="common" id="english" /></SelectItem>
+                      <SelectItem value="ar"><TranslatedText namespace="common" id="arabic" /></SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    This will change the language of the application.
+                    <TranslatedText namespace="settings" id="languageDescription" />
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -144,7 +145,7 @@ export function SettingsForm() {
               name="theme"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Theme</FormLabel>
+                  <FormLabel><TranslatedText namespace="common" id="theme" /></FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -152,16 +153,16 @@ export function SettingsForm() {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a theme" />
+                      <SelectValue placeholder={<TranslatedText namespace="common" id="theme" />} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="light">Light</SelectItem>
-                      <SelectItem value="dark">Dark</SelectItem>
+                      <SelectItem value="light"><TranslatedText namespace="common" id="light" /></SelectItem>
+                      <SelectItem value="dark"><TranslatedText namespace="common" id="dark" /></SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Choose between light and dark mode.
+                    <TranslatedText namespace="settings" id="themeDescription" />
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -174,9 +175,9 @@ export function SettingsForm() {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Notifications</FormLabel>
+                    <FormLabel className="text-base"><TranslatedText namespace="common" id="notifications" /></FormLabel>
                     <FormDescription>
-                      Receive notifications about stock alerts, payments, and system updates.
+                      <TranslatedText namespace="settings" id="notificationsDescription" />
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -191,7 +192,7 @@ export function SettingsForm() {
 
             <CardFooter className="flex justify-end px-0">
               <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : "Save Changes"}
+                {loading ? <TranslatedText namespace="settings" id="savingChanges" /> : <TranslatedText namespace="settings" id="saveChanges" />}
               </Button>
             </CardFooter>
           </form>

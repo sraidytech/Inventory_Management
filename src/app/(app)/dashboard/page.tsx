@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useLanguage } from "@/components/language/language-provider";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { EnhancedStatCard } from "@/components/dashboard/enhanced-stat-card";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
@@ -72,6 +73,8 @@ interface Client {
 }
 
 export default function DashboardPage() {
+  const { isRTL } = useLanguage();
+  
   // Initialize with today's date and 7 days ago
   const today = new Date().toISOString().split('T')[0];
   const sevenDaysAgo = new Date();
@@ -290,7 +293,7 @@ export default function DashboardPage() {
             size="icon"
             onClick={() => fetchDashboardData(startDate, endDate)}
             disabled={isLoading || refreshing}
-            className="ml-2"
+            className={`${isRTL ? 'mr-2' : 'ml-2'}`}
           >
             <RefreshCw className={`h-4 w-4 ${(isLoading || refreshing) ? 'animate-spin' : ''}`} />
             <span className="sr-only">Refresh</span>
@@ -310,25 +313,25 @@ export default function DashboardPage() {
       {/* Inventory Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <EnhancedStatCard
-          title="Total Products"
+          title={<TranslatedText namespace="dashboard.stats" id="totalProducts" />}
           value={stats.totalProducts ?? 0}
           icon={<Package2Icon className="text-blue-500" />}
           trend={productsTrend}
           sparklineData={generateSparklineData(stats.totalProducts)}
         />
         <EnhancedStatCard
-          title="Low Stock Products"
+          title={<TranslatedText namespace="dashboard.stats" id="lowStock" />}
           value={stats.lowStockProducts ?? 0}
           icon={<AlertTriangleIcon className="text-amber-500" />}
         />
         <EnhancedStatCard
-          title="Total Suppliers"
+          title={<TranslatedText namespace="dashboard.stats" id="totalSuppliers" />}
           value={stats.totalSuppliers ?? 0}
           icon={<UsersIcon className="text-indigo-500" />}
           sparklineData={generateSparklineData(stats.totalSuppliers)}
         />
         <EnhancedStatCard
-          title="Total Categories"
+          title={<TranslatedText namespace="dashboard.stats" id="totalCategories" />}
           value={stats.totalCategories ?? 0}
           icon={<FolderIcon className="text-purple-500" />}
         />
@@ -337,7 +340,7 @@ export default function DashboardPage() {
       {/* Financial Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <EnhancedStatCard
-          title="Total Sales"
+          title={<TranslatedText namespace="dashboard.stats" id="totalSales" />}
           value={`DH ${(stats.totalSales ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<TrendingUpIcon className="text-emerald-500" />}
           trend={salesTrend}
@@ -345,14 +348,14 @@ export default function DashboardPage() {
           className="lg:col-span-1"
         />
         <EnhancedStatCard
-          title="Total Purchases"
+          title={<TranslatedText namespace="dashboard.stats" id="totalPurchases" />}
           value={`DH ${(stats.totalPurchases ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<TrendingDownIcon className="text-pink-500" />}
           sparklineData={generateSparklineData(stats.totalPurchases)}
           className="lg:col-span-1"
         />
         <EnhancedStatCard
-          title="Total Stock Value"
+          title={<TranslatedText namespace="common" id="inventory" />}
           value={`DH ${(stats.stockValue ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<ArchiveIcon className="text-cyan-500" />}
           className="lg:col-span-1"
@@ -362,19 +365,19 @@ export default function DashboardPage() {
       {/* Profit Stats */}
       <div className="grid gap-4 md:grid-cols-3">
         <EnhancedStatCard
-          title="Total Received"
+          title={<TranslatedText namespace="payments" id="title" />}
           value={`DH ${(stats.totalReceived ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<DollarSignIcon className="text-green-500" />}
           className="md:col-span-1"
         />
         <EnhancedStatCard
-          title="Total Paid"
+          title={<TranslatedText namespace="transactions" id="amountPaid" />}
           value={`DH ${(stats.totalPaid ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<CreditCardIcon className="text-orange-500" />}
           className="md:col-span-1"
         />
         <EnhancedStatCard
-          title="Profit"
+          title={<TranslatedText namespace="dashboard.stats" id="totalProfit" />}
           value={`DH ${(stats.profit ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<PercentIcon className="text-violet-500" />}
           trend={profitTrend}
@@ -408,8 +411,8 @@ export default function DashboardPage() {
               className="text-sm"
               onClick={() => window.location.href = '/clients'}
             >
-              View All Clients
-              <ArrowRight className="ml-1 h-4 w-4" />
+              <TranslatedText namespace="common" id="view" /> <TranslatedText namespace="clients" id="title" />
+              <ArrowRight className={`${isRTL ? 'mr-1' : 'ml-1'} h-4 w-4`} />
             </Button>
           </div>
         </CardHeader>
@@ -423,15 +426,17 @@ export default function DashboardPage() {
         <Card className="shadow-md border-0">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl font-semibold">Credit Report</CardTitle>
+              <CardTitle className="text-xl font-semibold">
+                <TranslatedText namespace="clients" id="title" />
+              </CardTitle>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="text-sm"
                 onClick={() => window.location.href = '/clients'}
               >
-                View All Clients
-                <ArrowRight className="ml-1 h-4 w-4" />
+                <TranslatedText namespace="clients" id="title" />
+                <ArrowRight className={`${isRTL ? 'mr-1' : 'ml-1'} h-4 w-4`} />
               </Button>
             </div>
           </CardHeader>
@@ -448,15 +453,17 @@ export default function DashboardPage() {
         <Card className="shadow-md border-0">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl font-semibold">Recent Transactions</CardTitle>
+              <CardTitle className="text-xl font-semibold">
+                <TranslatedText namespace="dashboard" id="recentTransactions" />
+              </CardTitle>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="text-sm"
                 onClick={() => window.location.href = '/transactions'}
               >
-                View All Transactions
-                <ArrowRight className="ml-1 h-4 w-4" />
+                <TranslatedText namespace="common" id="transactions" />
+                <ArrowRight className={`${isRTL ? 'mr-1' : 'ml-1'} h-4 w-4`} />
               </Button>
             </div>
           </CardHeader>

@@ -3,6 +3,7 @@
 import { Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/components/language/language-provider"
+import { TranslatedText } from "@/components/language/translated-text"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,13 +41,13 @@ export function LanguageToggle({
           onClick={() => setLanguage("en")}
           className={language === "en" ? "bg-accent" : ""}
         >
-          English
+          <TranslatedText namespace="common" id="english" />
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => setLanguage("ar")}
           className={language === "ar" ? "bg-accent" : ""}
         >
-          العربية
+          <TranslatedText namespace="common" id="arabic" />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { TranslatedText } from "@/components/language/translated-text";
+import { useLanguage } from "@/components/language/language-provider";
 
 // Define notification types
 type NotificationType = "STOCK_ALERT" | "PAYMENT_DUE" | "PAYMENT_RECEIVED" | "SYSTEM";
@@ -22,6 +24,7 @@ interface Notification {
 }
 
 export function NotificationDropdown() {
+  const { isRTL } = useLanguage();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -124,16 +127,28 @@ export function NotificationDropdown() {
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
     
     if (diffInSeconds < 60) {
-      return "just now";
+      return <TranslatedText namespace="common" id="justNow" />;
     } else if (diffInSeconds < 3600) {
       const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
+      return (
+        <span>
+          {minutes} <TranslatedText namespace="common" id={minutes === 1 ? "minute" : "minutes"} /> <TranslatedText namespace="common" id="ago" />
+        </span>
+      );
     } else if (diffInSeconds < 86400) {
       const hours = Math.floor(diffInSeconds / 3600);
-      return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
+      return (
+        <span>
+          {hours} <TranslatedText namespace="common" id={hours === 1 ? "hour" : "hours"} /> <TranslatedText namespace="common" id="ago" />
+        </span>
+      );
     } else {
       const days = Math.floor(diffInSeconds / 86400);
-      return `${days} ${days === 1 ? "day" : "days"} ago`;
+      return (
+        <span>
+          {days} <TranslatedText namespace="common" id={days === 1 ? "day" : "days"} /> <TranslatedText namespace="common" id="ago" />
+        </span>
+      );
     }
   };
 
@@ -141,15 +156,15 @@ export function NotificationDropdown() {
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
       case "STOCK_ALERT":
-        return <div className="w-2 h-2 rounded-full bg-red-500 mr-2" />;
+        return <div className={`w-2 h-2 rounded-full bg-red-500 ${isRTL ? 'ml-2' : 'mr-2'}`} />;
       case "PAYMENT_DUE":
-        return <div className="w-2 h-2 rounded-full bg-amber-500 mr-2" />;
+        return <div className={`w-2 h-2 rounded-full bg-amber-500 ${isRTL ? 'ml-2' : 'mr-2'}`} />;
       case "PAYMENT_RECEIVED":
-        return <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />;
+        return <div className={`w-2 h-2 rounded-full bg-green-500 ${isRTL ? 'ml-2' : 'mr-2'}`} />;
       case "SYSTEM":
-        return <div className="w-2 h-2 rounded-full bg-blue-500 mr-2" />;
+        return <div className={`w-2 h-2 rounded-full bg-blue-500 ${isRTL ? 'ml-2' : 'mr-2'}`} />;
       default:
-        return <div className="w-2 h-2 rounded-full bg-gray-500 mr-2" />;
+        return <div className={`w-2 h-2 rounded-full bg-gray-500 ${isRTL ? 'ml-2' : 'mr-2'}`} />;
     }
   };
 
@@ -159,7 +174,7 @@ export function NotificationDropdown() {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
+            <span className={`absolute -top-1 ${isRTL ? '-left-1' : '-right-1'} flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white`}>
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
@@ -167,7 +182,7 @@ export function NotificationDropdown() {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center justify-between p-4">
-          <h3 className="font-medium">Notifications</h3>
+          <h3 className="font-medium"><TranslatedText namespace="common" id="notifications" /></h3>
           {notifications.length > 0 && (
             <Button 
               variant="ghost" 
@@ -175,8 +190,8 @@ export function NotificationDropdown() {
               onClick={markAllAsRead}
               className="h-8 px-2 text-xs"
             >
-              <Check className="h-3.5 w-3.5 mr-1" />
-              Mark all as read
+              <Check className={`h-3.5 w-3.5 ${isRTL ? 'ml-1' : 'mr-1'}`} />
+              <TranslatedText namespace="notifications" id="markAllAsRead" />
             </Button>
           )}
         </div>
@@ -184,11 +199,11 @@ export function NotificationDropdown() {
         <div className="max-h-[300px] overflow-y-auto">
           {loading ? (
             <div className="p-4 text-center text-sm text-gray-500">
-              Loading notifications...
+              <TranslatedText namespace="common" id="loading" />
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-4 text-center text-sm text-gray-500">
-              No new notifications
+              <TranslatedText namespace="notifications" id="noNotifications" />
             </div>
           ) : (
             <div>
@@ -206,7 +221,7 @@ export function NotificationDropdown() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex space-x-1">
+                      <div className={`flex ${isRTL ? 'space-x-reverse space-x-1' : 'space-x-1'}`}>
                         {notification.link && (
                           <Link href={notification.link}>
                             <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -234,7 +249,7 @@ export function NotificationDropdown() {
         <div className="p-2">
           <Link href="/notifications">
             <Button variant="ghost" size="sm" className="w-full text-xs">
-              View all notifications
+              <TranslatedText namespace="common" id="view" /> <TranslatedText namespace="common" id="notifications" />
             </Button>
           </Link>
         </div>

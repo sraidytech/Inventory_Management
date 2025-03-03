@@ -50,7 +50,16 @@
     "warning": "تحذير",
     "info": "معلومات",
     "inventory": "المخزون",
-    "finance": "المالية"
+    "finance": "المالية",
+    "all": "الكل",
+    "justNow": "الآن",
+    "minute": "دقيقة",
+    "minutes": "دقائق",
+    "hour": "ساعة",
+    "hours": "ساعات",
+    "day": "يوم",
+    "days": "أيام",
+    "ago": "منذ"
   },
   "dashboard": {
     "title": "لوحة التحكم",
