@@ -11,6 +11,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { clientFormSchema } from "@/lib/validations";
+import { TranslatedText } from "@/components/language/translated-text";
+import { useLanguage } from "@/components/language/language-provider";
 
 type ClientFormData = z.infer<typeof clientFormSchema>;
 
@@ -22,6 +24,7 @@ interface ClientFormProps {
 export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const { language, isRTL } = useLanguage();
 
   // Log the initialData to see what's being passed to the form
   console.log("Client Form initialData:", initialData);
@@ -74,7 +77,9 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
       }
 
       toast.success(
-        `Client ${initialData ? "updated" : "created"} successfully`
+        language === "ar" 
+          ? `تم ${initialData ? "تحديث" : "إنشاء"} العميل بنجاح` 
+          : `Client ${initialData ? "updated" : "created"} successfully`
       );
       
       if (onSuccess) {
@@ -85,7 +90,13 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
       }
     } catch (error) {
       console.error("Error saving client:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to save client");
+      toast.error(
+        error instanceof Error 
+          ? error.message 
+          : language === "ar" 
+            ? "فشل في حفظ العميل" 
+            : "Failed to save client"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -99,9 +110,12 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel><TranslatedText namespace="common" id="name" /></FormLabel>
               <FormControl>
-                <Input placeholder="Client name" {...field} />
+                <Input 
+                  placeholder={language === "ar" ? "اسم العميل" : "Client name"} 
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -113,9 +127,17 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email (Optional)</FormLabel>
+              <FormLabel>
+                <TranslatedText namespace="common" id="email" /> 
+                ({language === "ar" ? "اختياري" : "Optional"})
+              </FormLabel>
               <FormControl>
-                <Input type="email" placeholder="client@example.com" {...field} value={field.value || ""} />
+                <Input 
+                  type="email" 
+                  placeholder="client@example.com" 
+                  {...field} 
+                  value={field.value || ""} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -127,7 +149,7 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone</FormLabel>
+              <FormLabel><TranslatedText namespace="common" id="phone" /></FormLabel>
               <FormControl>
                 <Input placeholder="+1 234 567 890" {...field} />
               </FormControl>
@@ -141,10 +163,10 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Address</FormLabel>
+              <FormLabel><TranslatedText namespace="common" id="address" /></FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Client address"
+                  placeholder={language === "ar" ? "عنوان العميل" : "Client address"}
                   className="resize-none"
                   {...field}
                 />
@@ -159,10 +181,13 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes (Optional)</FormLabel>
+              <FormLabel>
+                <TranslatedText namespace="common" id="notes" /> 
+                ({language === "ar" ? "اختياري" : "Optional"})
+              </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Additional notes about the client"
+                  placeholder={language === "ar" ? "ملاحظات إضافية حول العميل" : "Additional notes about the client"}
                   className="resize-none"
                   {...field}
                   value={field.value || ""}
@@ -179,16 +204,16 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
             name="totalDue"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Total Due</FormLabel>
+                <FormLabel><TranslatedText namespace="clients" id="totalDue" /></FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">DH</span>
+                    <span className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-muted-foreground`}>DH</span>
                     <Input 
                       type="number" 
                       step="0.01" 
                       min="0"
                       placeholder="0.00" 
-                      className="pl-9"
+                      className={isRTL ? 'pr-9' : 'pl-9'}
                       {...field}
                       onChange={(e) => {
                         const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
@@ -208,16 +233,16 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
             name="amountPaid"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Amount Paid</FormLabel>
+                <FormLabel><TranslatedText namespace="clients" id="amountPaid" /></FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">DH</span>
+                    <span className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-muted-foreground`}>DH</span>
                     <Input 
                       type="number" 
                       step="0.01" 
                       min="0"
                       placeholder="0.00" 
-                      className="pl-9"
+                      className={isRTL ? 'pr-9' : 'pl-9'}
                       {...field}
                       onChange={(e) => {
                         const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
@@ -233,10 +258,10 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
           />
 
           <FormItem>
-            <FormLabel>Balance</FormLabel>
+            <FormLabel><TranslatedText namespace="clients" id="balance" /></FormLabel>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">DH</span>
-              <div className="h-10 px-9 py-2 rounded-md border border-input bg-background text-sm ring-offset-background flex items-center">
+              <span className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-muted-foreground`}>DH</span>
+              <div className={`h-10 ${isRTL ? 'pr-9' : 'pl-9'} py-2 rounded-md border border-input bg-background text-sm ring-offset-background flex items-center`}>
                 <span className={balance > 0 ? "text-destructive" : ""}>
                   {balance.toFixed(2)}
                 </span>
@@ -245,17 +270,22 @@ export function ClientForm({ initialData, onSuccess }: ClientFormProps) {
           </FormItem>
         </div>
 
-        <div className="flex justify-end gap-2">
+        <div className={`flex justify-end gap-2 ${isRTL ? 'space-x-reverse' : ''}`}>
           <Button
             type="button"
             variant="outline"
             onClick={() => router.back()}
             disabled={isLoading}
           >
-            Cancel
+            <TranslatedText namespace="common" id="cancel" />
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Saving..." : initialData ? "Update" : "Create"}
+            {isLoading 
+              ? (language === "ar" ? "جاري الحفظ..." : "Saving...") 
+              : initialData 
+                ? (language === "ar" ? "تحديث" : "Update") 
+                : (language === "ar" ? "إنشاء" : "Create")
+            }
           </Button>
         </div>
       </form>

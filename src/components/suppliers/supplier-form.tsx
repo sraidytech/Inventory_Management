@@ -11,6 +11,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supplierFormSchema } from "@/lib/validations";
+import { TranslatedText } from "@/components/language/translated-text";
+import { useLanguage } from "@/components/language/language-provider";
 
 type SupplierFormData = z.infer<typeof supplierFormSchema>;
 
@@ -22,6 +24,7 @@ interface SupplierFormProps {
 export function SupplierForm({ initialData, onSuccess }: SupplierFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const { language, isRTL } = useLanguage();
 
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierFormSchema),
@@ -54,7 +57,9 @@ export function SupplierForm({ initialData, onSuccess }: SupplierFormProps) {
       }
 
       toast.success(
-        `Supplier ${initialData ? "updated" : "created"} successfully`
+        language === "ar" 
+          ? `تم ${initialData ? "تحديث" : "إنشاء"} المورد بنجاح` 
+          : `Supplier ${initialData ? "updated" : "created"} successfully`
       );
       
       if (onSuccess) {
@@ -65,7 +70,13 @@ export function SupplierForm({ initialData, onSuccess }: SupplierFormProps) {
       }
     } catch (error) {
       console.error("Error saving supplier:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to save supplier");
+      toast.error(
+        error instanceof Error 
+          ? error.message 
+          : language === "ar" 
+            ? "فشل في حفظ المورد" 
+            : "Failed to save supplier"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -79,9 +90,12 @@ export function SupplierForm({ initialData, onSuccess }: SupplierFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel><TranslatedText namespace="common" id="name" /></FormLabel>
               <FormControl>
-                <Input placeholder="Supplier name" {...field} />
+                <Input 
+                  placeholder={language === "ar" ? "اسم المورد" : "Supplier name"} 
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -93,7 +107,7 @@ export function SupplierForm({ initialData, onSuccess }: SupplierFormProps) {
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone</FormLabel>
+              <FormLabel><TranslatedText namespace="common" id="phone" /></FormLabel>
               <FormControl>
                 <Input placeholder="+1 234 567 890" {...field} />
               </FormControl>
@@ -107,10 +121,10 @@ export function SupplierForm({ initialData, onSuccess }: SupplierFormProps) {
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Address</FormLabel>
+              <FormLabel><TranslatedText namespace="common" id="address" /></FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Supplier address"
+                  placeholder={language === "ar" ? "عنوان المورد" : "Supplier address"}
                   className="resize-none"
                   {...field}
                 />
@@ -120,17 +134,22 @@ export function SupplierForm({ initialData, onSuccess }: SupplierFormProps) {
           )}
         />
 
-        <div className="flex justify-end gap-2">
+        <div className={`flex justify-end gap-2 ${isRTL ? 'space-x-reverse' : ''}`}>
           <Button
             type="button"
             variant="outline"
             onClick={() => router.back()}
             disabled={isLoading}
           >
-            Cancel
+            <TranslatedText namespace="common" id="cancel" />
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Saving..." : initialData ? "Update" : "Create"}
+            {isLoading 
+              ? (language === "ar" ? "جاري الحفظ..." : "Saving...") 
+              : initialData 
+                ? (language === "ar" ? "تحديث" : "Update") 
+                : (language === "ar" ? "إنشاء" : "Create")
+            }
           </Button>
         </div>
       </form>

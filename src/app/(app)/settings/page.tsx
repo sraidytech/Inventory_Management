@@ -5,8 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserCircle, Bell, Lock, Shield } from "lucide-react";
 import { TranslatedText } from "@/components/language/translated-text";
+import { useLanguage } from "@/components/language/language-provider";
 
 export default function SettingsPage() {
+  const { language } = useLanguage();
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8">
@@ -14,7 +16,7 @@ export default function SettingsPage() {
           <TranslatedText namespace="settings" id="title" />
         </h1>
         <p className="text-muted-foreground mt-2">
-          <TranslatedText namespace="settings" id="description" />
+          {language === "ar" ? "إدارة إعدادات التطبيق والتفضيلات الشخصية" : "Manage application settings and personal preferences"}
         </p>
       </div>
 

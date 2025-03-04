@@ -14,6 +14,8 @@ import { generateFrenchInvoice } from "@/components/transactions/french-invoice"
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { TransactionDetails } from "@/components/transactions/transaction-details";
 import { TransactionsTableSkeleton } from "@/components/transactions/loading";
+import { TranslatedText } from "@/components/language/translated-text";
+import { useLanguage } from "@/components/language/language-provider";
 
 interface Transaction {
   id: string;
@@ -66,6 +68,7 @@ interface TransactionsResponse {
 export function TransactionsClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isRTL, language } = useLanguage();
   
   const [isLoading, setIsLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -140,14 +143,14 @@ export function TransactionsClient() {
         setMetadata(data.data.metadata);
       } catch (error) {
         console.error("Error fetching transactions:", error);
-        toast.error("Failed to load transactions");
+        toast.error(language === "ar" ? "فشل في تحميل المعاملات" : "Failed to load transactions");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchTransactions();
-  }, [page, typeFilter, statusFilter, startDate, endDate, metadata.limit]);
+  }, [page, typeFilter, statusFilter, startDate, endDate, metadata.limit, language]);
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -185,13 +188,27 @@ export function TransactionsClient() {
     handlePageChange(1);
   };
 
+  // Arabic month names
+  const arabicMonths = [
+    "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+    "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+  ];
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    
+    if (language === "ar") {
+      const day = date.getDate();
+      const month = arabicMonths[date.getMonth()];
+      const year = date.getFullYear();
+      return `${day} ${month} ${year}`;
+    } else {
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -214,10 +231,10 @@ export function TransactionsClient() {
       {/* Action buttons */}
       <div className="flex justify-between items-center">
         <div className="relative w-64">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className={`absolute ${isRTL ? 'right-2' : 'left-2'} top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
           <Input
-            placeholder="Search transactions..."
-            className="pl-8"
+            placeholder={language === "ar" ? "البحث عن المعاملات..." : "Search transactions..."}
+            className={isRTL ? 'pr-8' : 'pl-8'}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -226,15 +243,15 @@ export function TransactionsClient() {
           <Dialog open={showPurchaseForm} onOpenChange={setShowPurchaseForm}>
             <DialogTrigger asChild>
               <Button variant="outline">
-                <ArrowDownRight className="mr-2 h-4 w-4" />
-                Record Purchase
+                <ArrowDownRight className={`${isRTL ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+                <TranslatedText namespace="transactions" id="recordPurchase" />
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Record Purchase</DialogTitle>
+                <DialogTitle><TranslatedText namespace="transactions" id="recordPurchase" /></DialogTitle>
                 <DialogDescription>
-                  Create a new purchase transaction from a supplier
+                  <TranslatedText namespace="transactions" id="purchaseDescription" />
                 </DialogDescription>
               </DialogHeader>
               <TransactionForm 
@@ -247,15 +264,15 @@ export function TransactionsClient() {
           <Dialog open={showSaleForm} onOpenChange={setShowSaleForm}>
             <DialogTrigger asChild>
               <Button>
-                <ArrowUpRight className="mr-2 h-4 w-4" />
-                Record Sale
+                <ArrowUpRight className={`${isRTL ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+                <TranslatedText namespace="transactions" id="recordSale" />
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Record Sale</DialogTitle>
+                <DialogTitle><TranslatedText namespace="transactions" id="recordSale" /></DialogTitle>
                 <DialogDescription>
-                  Create a new sale transaction to a client
+                  <TranslatedText namespace="transactions" id="saleDescription" />
                 </DialogDescription>
               </DialogHeader>
               <TransactionForm 
@@ -272,7 +289,7 @@ export function TransactionsClient() {
         <div className="flex items-center flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">Filters:</span>
+            <span className="text-sm"><TranslatedText namespace="common" id="filter" />:</span>
           </div>
           
           <Select
@@ -280,13 +297,13 @@ export function TransactionsClient() {
             onValueChange={handleTypeFilterChange}
           >
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Transaction Type" />
+              <SelectValue placeholder={<TranslatedText namespace="transactions" id="transactionType" />} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Types</SelectItem>
-              <SelectItem value="PURCHASE">Purchases</SelectItem>
-              <SelectItem value="SALE">Sales</SelectItem>
-              <SelectItem value="ADJUSTMENT">Adjustments</SelectItem>
+              <SelectItem value="ALL"><TranslatedText namespace="common" id="all" /></SelectItem>
+              <SelectItem value="PURCHASE"><TranslatedText namespace="transactions" id="purchases" /></SelectItem>
+              <SelectItem value="SALE"><TranslatedText namespace="transactions" id="sales" /></SelectItem>
+              <SelectItem value="ADJUSTMENT"><TranslatedText namespace="transactions" id="adjustments" /></SelectItem>
             </SelectContent>
           </Select>
           
@@ -295,13 +312,13 @@ export function TransactionsClient() {
             onValueChange={handleStatusFilterChange}
           >
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={<TranslatedText namespace="common" id="status" />} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Statuses</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="COMPLETED">Completed</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+              <SelectItem value="ALL"><TranslatedText namespace="transactions" id="allStatuses" /></SelectItem>
+              <SelectItem value="PENDING"><TranslatedText namespace="transactions" id="status.pending" /></SelectItem>
+              <SelectItem value="COMPLETED"><TranslatedText namespace="transactions" id="status.completed" /></SelectItem>
+              <SelectItem value="CANCELLED"><TranslatedText namespace="transactions" id="status.cancelled" /></SelectItem>
             </SelectContent>
           </Select>
           
@@ -335,9 +352,9 @@ export function TransactionsClient() {
               params.set("page", "1");
               router.push(`/transactions?${params.toString()}`);
             }}
-            className="ml-2"
+            className={isRTL ? 'mr-2' : 'ml-2'}
           >
-            Reset All Filters
+            <TranslatedText namespace="common" id="resetFilters" />
           </Button>
         )}
       </div>
@@ -346,23 +363,23 @@ export function TransactionsClient() {
       <Card>
         <CardContent className="p-0">
           <div className="relative overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className={`w-full text-sm ${isRTL ? 'text-right' : 'text-left'}`}>
               <thead className="text-xs uppercase bg-muted/50">
                 <tr>
-                  <th className="px-6 py-3">Date</th>
-                  <th className="px-6 py-3">Type</th>
-                  <th className="px-6 py-3">Party</th>
-                  <th className="px-6 py-3">Items</th>
-                  <th className="px-6 py-3">Total</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3">Actions</th>
+                  <th className="px-6 py-3"><TranslatedText namespace="common" id="date" /></th>
+                  <th className="px-6 py-3"><TranslatedText namespace="common" id="type" /></th>
+                  <th className="px-6 py-3"><TranslatedText namespace="transactions" id="party" /></th>
+                  <th className="px-6 py-3"><TranslatedText namespace="transactions" id="items" /></th>
+                  <th className="px-6 py-3"><TranslatedText namespace="common" id="total" /></th>
+                  <th className="px-6 py-3"><TranslatedText namespace="common" id="status" /></th>
+                  <th className="px-6 py-3"><TranslatedText namespace="common" id="actions" /></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredTransactions.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                      No transactions found
+                      <TranslatedText namespace="transactions" id="noTransactionsFound" />
                     </td>
                   </tr>
                 ) : (
@@ -378,11 +395,14 @@ export function TransactionsClient() {
                             : "text-orange-600 dark:text-orange-400"
                         }`}>
                           {transaction.type === "PURCHASE" ? (
-                            <ArrowDownRight className="mr-1 h-4 w-4" />
+                            <ArrowDownRight className={`${isRTL ? 'ml-1' : 'mr-1'} h-4 w-4`} />
                           ) : transaction.type === "SALE" ? (
-                            <ArrowUpRight className="mr-1 h-4 w-4" />
+                            <ArrowUpRight className={`${isRTL ? 'ml-1' : 'mr-1'} h-4 w-4`} />
                           ) : null}
-                          {transaction.type.charAt(0) + transaction.type.slice(1).toLowerCase()}
+                          <TranslatedText 
+                            namespace="transactions" 
+                            id={`type.${transaction.type.toLowerCase()}`} 
+                          />
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -396,7 +416,10 @@ export function TransactionsClient() {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>
-                          {transaction.status.charAt(0) + transaction.status.slice(1).toLowerCase()}
+                          <TranslatedText 
+                            namespace="transactions" 
+                            id={`status.${transaction.status.toLowerCase()}`} 
+                          />
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -408,7 +431,7 @@ export function TransactionsClient() {
                                 size="sm"
                                 onClick={() => setSelectedTransaction(transaction)}
                               >
-                                View Details
+                                <TranslatedText namespace="common" id="viewDetails" />
                               </Button>
                             </DialogTrigger>
                             {selectedTransaction && selectedTransaction.id === transaction.id && (
@@ -425,15 +448,15 @@ export function TransactionsClient() {
                             onClick={() => {
                               try {
                                 generateFrenchInvoice(transaction);
-                                toast.success("Facture générée avec succès");
+                                toast.success(language === "ar" ? "تم إنشاء الفاتورة بنجاح" : "Facture générée avec succès");
                               } catch (error) {
                                 console.error("Error generating invoice:", error);
-                                toast.error("Échec de la génération de la facture");
+                                toast.error(language === "ar" ? "فشل في إنشاء الفاتورة" : "Échec de la génération de la facture");
                               }
                             }}
                           >
-                            <FileText className="h-4 w-4 mr-1" />
-                            Generate Invoice
+                            <FileText className={`h-4 w-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
+                            <TranslatedText namespace="transactions" id="generateInvoice" />
                           </Button>
                         </div>
                       </td>
@@ -450,9 +473,9 @@ export function TransactionsClient() {
       {metadata.totalPages > 1 && (
         <div className="flex justify-between items-center pt-4">
           <div className="text-sm text-muted-foreground">
-            Showing {(metadata.page - 1) * metadata.limit + 1} to{" "}
-            {Math.min(metadata.page * metadata.limit, metadata.total)} of{" "}
-            {metadata.total} transactions
+            <TranslatedText namespace="common" id="showing" /> {(metadata.page - 1) * metadata.limit + 1} <TranslatedText namespace="common" id="to" />{" "}
+            {Math.min(metadata.page * metadata.limit, metadata.total)} <TranslatedText namespace="common" id="of" />{" "}
+            {metadata.total} <TranslatedText namespace="transactions" id="transactions" />
           </div>
           <div className="flex space-x-2">
             <Button
@@ -462,7 +485,7 @@ export function TransactionsClient() {
               disabled={metadata.page === 1}
             >
               <ChevronLeft className="h-4 w-4" />
-              <span className="sr-only">Previous Page</span>
+              <span className="sr-only"><TranslatedText namespace="common" id="previousPage" /></span>
             </Button>
             <Button
               variant="outline"
@@ -471,7 +494,7 @@ export function TransactionsClient() {
               disabled={metadata.page === metadata.totalPages}
             >
               <ChevronRight className="h-4 w-4" />
-              <span className="sr-only">Next Page</span>
+              <span className="sr-only"><TranslatedText namespace="common" id="nextPage" /></span>
             </Button>
           </div>
         </div>

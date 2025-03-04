@@ -12,6 +12,9 @@ import { ClientForm } from "@/components/clients/client-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ClientsTableSkeleton, ClientsCardSkeleton } from "@/components/clients/loading";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/components/language/language-provider";
+import { useTranslations } from "next-intl";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface Client {
   id: string;
@@ -30,6 +33,10 @@ interface Client {
 
 export default function ClientsPage() {
   const router = useRouter();
+  const { isRTL } = useLanguage();
+  const commonT = useTranslations("common");
+  const clientsT = useTranslations("clients");
+  
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [clients, setClients] = useState<Client[]>([]);
@@ -74,15 +81,15 @@ export default function ClientsPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to delete client");
+        throw new Error(error.error || clientsT("deleteError"));
       }
 
-      toast.success("Client deleted successfully");
+      toast.success(clientsT("deleteSuccess"));
       fetchClients();
       router.refresh();
     } catch (error) {
       console.error("Error deleting client:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete client");
+      toast.error(error instanceof Error ? error.message : clientsT("deleteError"));
     }
   };
 
@@ -90,7 +97,7 @@ export default function ClientsPage() {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/clients/${clientId}`);
-      if (!response.ok) throw new Error("Failed to fetch client");
+      if (!response.ok) throw new Error(clientsT("fetchError"));
       
       const client = await response.json();
       console.log("Fetched client data:", client);
@@ -116,11 +123,11 @@ export default function ClientsPage() {
           },
         });
       } else {
-        toast.error("Client data not found");
+        toast.error(clientsT("fetchError"));
       }
     } catch (error) {
       console.error("Error fetching client:", error);
-      toast.error("Failed to load client data");
+      toast.error(clientsT("fetchError"));
     } finally {
       setIsLoading(false);
     }
@@ -137,7 +144,7 @@ export default function ClientsPage() {
       });
 
       const response = await fetch(`/api/clients?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch clients");
+      if (!response.ok) throw new Error(clientsT("fetchError"));
 
       const data = await response.json();
       console.log("Clients API response:", data);
@@ -153,11 +160,11 @@ export default function ClientsPage() {
         setTotal(data.total);
       } else {
         console.error("Unexpected clients data structure:", data);
-        toast.error("Failed to load clients: Unexpected data format");
+        toast.error(clientsT("fetchError"));
       }
     } catch (error) {
       console.error("Error fetching clients:", error);
-      toast.error("Failed to load clients");
+      toast.error(clientsT("fetchError"));
     } finally {
       setIsLoading(false);
     }
@@ -172,9 +179,9 @@ export default function ClientsPage() {
     <div className="container mx-auto py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Clients</h1>
+          <h1 className="text-2xl font-bold">{clientsT("title")}</h1>
           <p className="text-muted-foreground">
-            Manage your clients and customer relationships
+            {clientsT("subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -184,7 +191,7 @@ export default function ClientsPage() {
               size="sm"
               className="h-8 px-2"
               onClick={() => setViewMode('card')}
-              aria-label="Card view"
+              aria-label={clientsT("cardView")}
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>
@@ -193,26 +200,26 @@ export default function ClientsPage() {
               size="sm"
               className="h-8 px-2"
               onClick={() => setViewMode('table')}
-              aria-label="Table view"
+              aria-label={clientsT("tableView")}
             >
               <LayoutList className="h-4 w-4" />
             </Button>
           </div>
           <Button onClick={() => setFormDialog({ isOpen: true, clientId: null, clientData: null })}>
-            <PlusIcon className="w-4 h-4 mr-2" />
-            Add Client
+            <PlusIcon className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+            {clientsT("addClient")}
           </Button>
         </div>
       </div>
 
       <div className="mb-6">
         <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <SearchIcon className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4`} />
           <Input
-            placeholder="Search clients..."
+            placeholder={clientsT("searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
+            className={isRTL ? 'pr-10' : 'pl-10'}
           />
         </div>
       </div>
@@ -262,14 +269,14 @@ export default function ClientsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">Balance:</span>
+                        <span className="font-medium">{clientsT("balance")}:</span>
                         <span className={client.balance > 0 ? "text-destructive font-medium" : "font-medium"}>
                           DH {client.balance.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">Transactions:</span>
+                        <span className="font-medium">{clientsT("transactions")}:</span>
                         <span>{client._count.transactions}</span>
                       </div>
                     </div>
@@ -280,8 +287,8 @@ export default function ClientsPage() {
                       size="sm"
                       onClick={() => openEditDialog(client.id)}
                     >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
+                      <Edit className={`h-4 w-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
+                      {clientsT("edit")}
                     </Button>
                     <Button
                       variant="outline"
@@ -295,8 +302,8 @@ export default function ClientsPage() {
                         });
                       }}
                     >
-                      <Trash2Icon className="h-4 w-4 mr-1" />
-                      Delete
+                      <Trash2Icon className={`h-4 w-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
+                      {clientsT("delete")}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -305,25 +312,22 @@ export default function ClientsPage() {
           ) : (
             <div className="rounded-lg border bg-card">
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-4 w-8"></th>
-                      <th className="text-left p-4">Name</th>
-                      <th className="text-left p-4">Contact</th>
-                      <th className="text-left p-4">Address</th>
-                      <th className="text-right p-4">Balance</th>
-                      <th className="text-right p-4">Transactions</th>
-                      <th className="text-right p-4">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-8"></TableHead>
+                    <TableHead>{commonT("name")}</TableHead>
+                    <TableHead>{clientsT("contact")}</TableHead>
+                    <TableHead>{commonT("address")}</TableHead>
+                    <TableHead className="text-right">{clientsT("balance")}</TableHead>
+                    <TableHead className="text-right">{clientsT("transactions")}</TableHead>
+                    <TableHead className="text-right">{commonT("actions")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                     {clients.map((client) => (
-                      <tr 
-                        key={client.id} 
-                        className="border-b hover:bg-muted/50"
-                      >
-                        <td className="p-4">
+                      <TableRow key={client.id}>
+                        <TableCell>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -336,27 +340,27 @@ export default function ClientsPage() {
                               <Square className="h-4 w-4" />
                             )}
                           </Button>
-                        </td>
-                        <td className="p-4">{client.name}</td>
-                        <td className="p-4">
+                        </TableCell>
+                        <TableCell>{client.name}</TableCell>
+                        <TableCell>
                           <div className="flex items-center text-sm">
-                            <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                            <Phone className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'} text-muted-foreground`} />
                             <span>{client.phone}</span>
                           </div>
-                        </td>
-                        <td className="p-4">{client.address}</td>
-                        <td className="p-4 text-right">
+                        </TableCell>
+                        <TableCell>{client.address}</TableCell>
+                        <TableCell className="text-right">
                           <div className="flex items-center justify-end text-sm">
                             <span className="mr-1 text-muted-foreground">DH</span>
                             <span className={client.balance > 0 ? "text-destructive" : ""}>
                               {client.balance.toFixed(2)}
                             </span>
                           </div>
-                        </td>
-                        <td className="p-4 text-right">
+                        </TableCell>
+                        <TableCell className="text-right">
                           {client._count.transactions}
-                        </td>
-                        <td className="p-4 text-right">
+                        </TableCell>
+                        <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
                               variant="ghost"
@@ -379,11 +383,11 @@ export default function ClientsPage() {
                               <Trash2Icon className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                </TableBody>
+              </Table>
               </div>
             </div>
           )}
@@ -391,7 +395,7 @@ export default function ClientsPage() {
           {/* Pagination */}
           <div className="mt-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {clients.length} of {total} clients
+              {commonT("showing")} {clients.length} {commonT("of")} {total} {clientsT("clients")}
             </p>
             <div className="flex gap-2">
               <Button
@@ -400,7 +404,7 @@ export default function ClientsPage() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
-                Previous
+                {commonT("previous")}
               </Button>
               <Button
                 variant="outline"
@@ -408,7 +412,7 @@ export default function ClientsPage() {
                 onClick={() => setPage((p) => p + 1)}
                 disabled={page * limit >= total}
               >
-                Next
+                {commonT("next")}
               </Button>
             </div>
           </div>
@@ -424,8 +428,8 @@ export default function ClientsPage() {
           if (!deleteDialog.clientId) return;
           await handleDelete(deleteDialog.clientId);
         }}
-        title="Delete Client"
-        description={`Are you sure you want to delete "${deleteDialog.clientName}"? This action cannot be undone. Clients with associated transactions cannot be deleted.`}
+        title={clientsT("deleteClient")}
+        description={`${clientsT("deleteConfirmation")} "${deleteDialog.clientName}"? ${clientsT("deleteWarning")}`}
       />
 
       <Dialog 
@@ -439,12 +443,12 @@ export default function ClientsPage() {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
-              {formDialog.clientId ? "Edit Client" : "Add Client"}
+              {formDialog.clientId ? clientsT("editClient") : clientsT("addClient")}
             </DialogTitle>
             <DialogDescription>
               {formDialog.clientId 
-                ? "Update client information and financial details" 
-                : "Add a new client to your system"}
+                ? clientsT("editDescription") 
+                : clientsT("addDescription")}
             </DialogDescription>
           </DialogHeader>
           <ClientForm 

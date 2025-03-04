@@ -11,6 +11,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { categoryFormSchema } from "@/lib/validations";
+import { TranslatedText } from "@/components/language/translated-text";
+import { useLanguage } from "@/components/language/language-provider";
 
 type CategoryFormData = z.infer<typeof categoryFormSchema>;
 
@@ -22,6 +24,7 @@ interface CategoryFormProps {
 export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const { language, isRTL } = useLanguage();
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categoryFormSchema),
@@ -53,7 +56,9 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
       }
 
       toast.success(
-        `Category ${initialData ? "updated" : "created"} successfully`
+        language === "ar" 
+          ? `تم ${initialData ? "تحديث" : "إنشاء"} الفئة بنجاح` 
+          : `Category ${initialData ? "updated" : "created"} successfully`
       );
       
       if (onSuccess) {
@@ -64,7 +69,13 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
       }
     } catch (error) {
       console.error("Error saving category:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to save category");
+      toast.error(
+        error instanceof Error 
+          ? error.message 
+          : language === "ar" 
+            ? "فشل في حفظ الفئة" 
+            : "Failed to save category"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -78,9 +89,12 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel><TranslatedText namespace="common" id="name" /></FormLabel>
               <FormControl>
-                <Input placeholder="Category name" {...field} />
+                <Input 
+                  placeholder={language === "ar" ? "اسم الفئة" : "Category name"} 
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -92,10 +106,10 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel><TranslatedText namespace="common" id="description" /></FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Category description"
+                  placeholder={language === "ar" ? "وصف الفئة" : "Category description"}
                   className="resize-none"
                   {...field}
                   value={field.value || ""}
@@ -106,17 +120,22 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
           )}
         />
 
-        <div className="flex justify-end gap-2">
+        <div className={`flex justify-end gap-2 ${isRTL ? 'space-x-reverse' : ''}`}>
           <Button
             type="button"
             variant="outline"
             onClick={() => router.back()}
             disabled={isLoading}
           >
-            Cancel
+            <TranslatedText namespace="common" id="cancel" />
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Saving..." : initialData ? "Update" : "Create"}
+            {isLoading 
+              ? (language === "ar" ? "جاري الحفظ..." : "Saving...") 
+              : initialData 
+                ? (language === "ar" ? "تحديث" : "Update") 
+                : (language === "ar" ? "إنشاء" : "Create")
+            }
           </Button>
         </div>
       </form>

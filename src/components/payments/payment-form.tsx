@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/language/language-provider";
+import { useTranslations } from "next-intl";
 import {
   Form,
   FormControl,
@@ -45,6 +47,8 @@ interface PaymentFormProps {
 export function PaymentForm({ transactionId, clientId, remainingAmount, payment, onClose }: PaymentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!payment;
+  const { language, isRTL } = useLanguage();
+  const paymentsT = useTranslations("payments");
 
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentFormSchema),
@@ -59,7 +63,9 @@ export function PaymentForm({ transactionId, clientId, remainingAmount, payment,
 
   const onSubmit = async (data: PaymentFormData) => {
     if (data.amount > remainingAmount && !isEditing) {
-      toast.error(`Payment amount cannot exceed remaining amount (DH ${remainingAmount.toFixed(2)})`);
+      toast.error(language === "ar" 
+        ? `لا يمكن أن يتجاوز مبلغ الدفع المبلغ المتبقي (${remainingAmount.toFixed(2)} درهم)` 
+        : `Payment amount cannot exceed remaining amount (DH ${remainingAmount.toFixed(2)})`);
       return;
     }
 
@@ -110,7 +116,9 @@ export function PaymentForm({ transactionId, clientId, remainingAmount, payment,
         }
         
         console.log("Payment success response:", responseData);
-        toast.success(`Payment ${isEditing ? 'updated' : 'recorded'} successfully`);
+        toast.success(language === "ar" 
+          ? `تم ${isEditing ? 'تحديث' : 'تسجيل'} الدفعة بنجاح` 
+          : `Payment ${isEditing ? 'updated' : 'recorded'} successfully`);
         onClose(true);
       } catch (fetchError) {
         console.error("Fetch error:", fetchError);
@@ -118,7 +126,11 @@ export function PaymentForm({ transactionId, clientId, remainingAmount, payment,
       }
     } catch (error) {
       console.error(`Error ${isEditing ? 'updating' : 'creating'} payment:`, error);
-      toast.error(error instanceof Error ? error.message : `Failed to ${isEditing ? 'update' : 'create'} payment`);
+      toast.error(error instanceof Error 
+        ? error.message 
+        : language === "ar" 
+          ? `فشل في ${isEditing ? 'تحديث' : 'إنشاء'} الدفعة` 
+          : `Failed to ${isEditing ? 'update' : 'create'} payment`);
     } finally {
       setIsSubmitting(false);
     }
@@ -132,17 +144,19 @@ export function PaymentForm({ transactionId, clientId, remainingAmount, payment,
           name="amount"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Amount</FormLabel>
+              <FormLabel>{paymentsT("amount")}</FormLabel>
               <FormControl>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">DH</span>
+                  <span className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-muted-foreground`}>
+                    {language === "ar" ? "درهم" : "DH"}
+                  </span>
                   <Input
                     type="number"
                     step="0.01"
                     min="0.01"
                     max={isEditing ? undefined : remainingAmount}
                     placeholder="0.00"
-                    className="pl-9"
+                    className={isRTL ? 'pr-12' : 'pl-9'}
                     {...field}
                     onChange={(e) => {
                       const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
@@ -161,20 +175,20 @@ export function PaymentForm({ transactionId, clientId, remainingAmount, payment,
           name="paymentMethod"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Payment Method</FormLabel>
+              <FormLabel>{language === "ar" ? "طريقة الدفع" : "Payment Method"}</FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select payment method" />
+                    <SelectValue placeholder={language === "ar" ? "اختر طريقة الدفع" : "Select payment method"} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="CASH">Cash</SelectItem>
-                  <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
-                  <SelectItem value="CHECK">Check</SelectItem>
+                  <SelectItem value="CASH">{language === "ar" ? "نقدًا" : "Cash"}</SelectItem>
+                  <SelectItem value="BANK_TRANSFER">{language === "ar" ? "تحويل بنكي" : "Bank Transfer"}</SelectItem>
+                  <SelectItem value="CHECK">{language === "ar" ? "شيك" : "Check"}</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -187,10 +201,10 @@ export function PaymentForm({ transactionId, clientId, remainingAmount, payment,
           name="reference"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Reference (Optional)</FormLabel>
+              <FormLabel>{language === "ar" ? "المرجع (اختياري)" : "Reference (Optional)"}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Check number or transfer reference"
+                  placeholder={language === "ar" ? "رقم الشيك أو مرجع التحويل" : "Check number or transfer reference"}
                   {...field}
                   value={field.value || ""}
                 />
@@ -205,10 +219,10 @@ export function PaymentForm({ transactionId, clientId, remainingAmount, payment,
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes (Optional)</FormLabel>
+              <FormLabel>{language === "ar" ? "ملاحظات (اختياري)" : "Notes (Optional)"}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Add any additional notes here"
+                  placeholder={language === "ar" ? "أضف أي ملاحظات إضافية هنا" : "Add any additional notes here"}
                   className="resize-none"
                   {...field}
                   value={field.value || ""}
@@ -226,10 +240,14 @@ export function PaymentForm({ transactionId, clientId, remainingAmount, payment,
             onClick={() => onClose()}
             disabled={isSubmitting}
           >
-            Cancel
+            {language === "ar" ? "إلغاء" : "Cancel"}
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : isEditing ? "Update Payment" : "Add Payment"}
+            {isSubmitting 
+              ? (language === "ar" ? "جاري الحفظ..." : "Saving...") 
+              : isEditing 
+                ? (language === "ar" ? "تحديث الدفعة" : "Update Payment") 
+                : (language === "ar" ? "إضافة دفعة" : "Add Payment")}
           </Button>
         </div>
       </form>

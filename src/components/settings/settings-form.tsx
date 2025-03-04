@@ -105,7 +105,7 @@ export function SettingsForm() {
       <CardHeader>
         <CardTitle><TranslatedText namespace="settings" id="title" /></CardTitle>
         <CardDescription>
-          <TranslatedText namespace="settings" id="description" />
+          {language === "ar" ? "إدارة إعدادات التطبيق والتفضيلات الشخصية" : "Manage application settings and personal preferences"}
         </CardDescription>
       </CardHeader>
       <CardContent>

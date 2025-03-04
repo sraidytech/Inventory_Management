@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { TranslatedText } from "@/components/language/translated-text";
+import { useLanguage } from "@/components/language/language-provider";
 
 interface ProductFormProps {
   initialData?: Partial<ProductFormData>;
@@ -36,6 +38,8 @@ export function ProductForm({
   isLoading = false,
 }: ProductFormProps) {
   const { categories, suppliers, isLoading: isLoadingOptions } = useCategoriesAndSuppliers();
+  const { language, isRTL } = useLanguage();
+  
   console.log('Initial form data:', initialData);
   const defaultValues: ProductFormData = {
     name: initialData?.name ?? "",
@@ -106,7 +110,7 @@ export function ProductForm({
           setError(error.message);
         }
       } else {
-        setError("Failed to save product");
+        setError(language === "ar" ? "فشل في حفظ المنتج" : "Failed to save product");
       }
     }
   };
@@ -121,9 +125,9 @@ export function ProductForm({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
+                <FormLabel><TranslatedText namespace="common" id="name" /></FormLabel>
                 <FormControl>
-                  <Input placeholder="Product name" {...field} />
+                  <Input placeholder={language === "ar" ? "اسم المنتج" : "Product name"} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -136,7 +140,7 @@ export function ProductForm({
             name="sku"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>SKU</FormLabel>
+                <FormLabel><TranslatedText namespace="products" id="sku" /></FormLabel>
                 <FormControl>
                   <Input placeholder="SKU" {...field} />
                 </FormControl>
@@ -151,12 +155,15 @@ export function ProductForm({
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Price (DH)</FormLabel>
+                <FormLabel>
+                  <TranslatedText namespace="common" id="price" /> 
+                  {language === "ar" ? " (درهم)" : " (DH)"}
+                </FormLabel>
                 <FormControl>
                   <Input
                     type="number"
                     step="0.01"
-                    suffix="DH"
+                    suffix={language === "ar" ? "درهم" : "DH"}
                     {...field}
                     value={field.value || ''}
                     onChange={(e) => {
@@ -176,19 +183,19 @@ export function ProductForm({
             name="unit"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Unit</FormLabel>
+                <FormLabel><TranslatedText namespace="products" id="unit" /></FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   value={field.value || "KG"}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select unit" />
+                      <SelectValue placeholder={language === "ar" ? "اختر الوحدة" : "Select unit"} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="KG">Kilogram (KG)</SelectItem>
-                    <SelectItem value="PIECE">Piece</SelectItem>
+                    <SelectItem value="KG"><TranslatedText namespace="products" id="kg" /></SelectItem>
+                    <SelectItem value="PIECE"><TranslatedText namespace="products" id="piece" /></SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -202,12 +209,16 @@ export function ProductForm({
             name="quantity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Quantity</FormLabel>
+                <FormLabel><TranslatedText namespace="common" id="quantity" /></FormLabel>
                 <FormControl>
                   <Input
                     type="number"
                     step="0.001"
-                    suffix={form.watch("unit")}
+                    suffix={form.watch("unit") === "KG" 
+                      ? (language === "ar" ? "كغ" : "KG") 
+                      : form.watch("unit") === "PIECE" 
+                        ? (language === "ar" ? "قطعة" : "PIECE") 
+                        : form.watch("unit")}
                     {...field}
                     value={field.value || ''}
                     onChange={(e) => {
@@ -227,12 +238,16 @@ export function ProductForm({
             name="minQuantity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Minimum Quantity</FormLabel>
+                <FormLabel><TranslatedText namespace="products" id="minQuantity" /></FormLabel>
                 <FormControl>
                   <Input
                     type="number"
                     step="0.001"
-                    suffix={form.watch("unit")}
+                    suffix={form.watch("unit") === "KG" 
+                      ? (language === "ar" ? "كغ" : "KG") 
+                      : form.watch("unit") === "PIECE" 
+                        ? (language === "ar" ? "قطعة" : "PIECE") 
+                        : form.watch("unit")}
                     {...field}
                     value={field.value || ''}
                     onChange={(e) => {
@@ -252,7 +267,7 @@ export function ProductForm({
             name="categoryId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Category</FormLabel>
+                <FormLabel><TranslatedText namespace="products" id="category" /></FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   value={field.value || ""}
@@ -260,7 +275,7 @@ export function ProductForm({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder={language === "ar" ? "اختر الفئة" : "Select category"} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -272,7 +287,7 @@ export function ProductForm({
                     ))
                   ) : (
                     <SelectItem value="no-categories" disabled>
-                      No categories available
+                      {language === "ar" ? "لا توجد فئات متاحة" : "No categories available"}
                     </SelectItem>
                   )}
                   </SelectContent>
@@ -288,7 +303,7 @@ export function ProductForm({
             name="supplierId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Supplier</FormLabel>
+                <FormLabel><TranslatedText namespace="products" id="supplier" /></FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   value={field.value || ""}
@@ -296,7 +311,7 @@ export function ProductForm({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select supplier" />
+                      <SelectValue placeholder={language === "ar" ? "اختر المورد" : "Select supplier"} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -308,7 +323,7 @@ export function ProductForm({
                       ))
                     ) : (
                       <SelectItem value="no-suppliers" disabled>
-                        No suppliers available
+                        {language === "ar" ? "لا يوجد موردين متاحين" : "No suppliers available"}
                       </SelectItem>
                     )}
                   </SelectContent>
@@ -325,11 +340,11 @@ export function ProductForm({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel><TranslatedText namespace="common" id="description" /></FormLabel>
               <FormControl>
                 <textarea
                   className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="Product description"
+                  placeholder={language === "ar" ? "وصف المنتج" : "Product description"}
                   {...field}
                 />
               </FormControl>
@@ -365,11 +380,15 @@ export function ProductForm({
               setError(null);
             }}
             disabled={isLoading}
+            className={isRTL ? 'ml-4' : 'mr-4'}
           >
-            Reset
+            <TranslatedText namespace="common" id="reset" />
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save Product"}
+            {isLoading ? 
+              (language === "ar" ? "جاري الحفظ..." : "Saving...") : 
+              (language === "ar" ? "حفظ المنتج" : "Save Product")
+            }
           </Button>
         </div>
       </form>

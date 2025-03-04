@@ -167,7 +167,7 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                               />
                               {!isCollapsed && (
                                 <>
-                                  <span className={`${isRTL ? 'mr-3' : 'ml-3'} flex-1 transition-all duration-300`}>
+                                  <span className={`${isRTL ? 'mr-6' : 'ml-3'} flex-1 transition-all duration-300`}>
                                     <TranslatedText namespace="common" id={route.label.toLowerCase()} />
                                   </span>
                                   <ChevronDown 
@@ -189,7 +189,7 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                       </TooltipRoot>
                       
                       {(!isCollapsed || (isCollapsed && isMobile)) && expandedRoutes.includes(route.label) && (
-                        <ul className="mt-1 pl-4 space-y-1">
+                        <ul className={`mt-1 ${isRTL ? 'pr-4' : 'pl-4'} space-y-1`}>
                           {route.subRoutes.map((subRoute) => (
                             <li key={subRoute.href}>
                               <Link
@@ -205,7 +205,7 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                                     className={cn("h-4 w-4", subRoute.color)} 
                                     aria-hidden="true"
                                   />
-                                  <span className="ml-3">
+                                  <span className={`${isRTL ? 'mr-6' : 'ml-3'}`}>
                                     {subRoute.label}
                                   </span>
                                 </div>
@@ -236,7 +236,7 @@ export function Sidebar({ isCollapsed, onCollapse, isMobile = false }: SidebarPr
                               aria-hidden="true"
                             />
                             {!isCollapsed && (
-                              <span className={`${isRTL ? 'mr-3' : 'ml-3'} transition-all duration-300`}>
+                              <span className={`${isRTL ? 'mr-6' : 'ml-3'} transition-all duration-300`}>
                                 <TranslatedText namespace="common" id={route.label.toLowerCase()} />
                               </span>
                             )}

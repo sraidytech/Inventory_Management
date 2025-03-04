@@ -10,6 +10,9 @@ import { toast } from "sonner";
 import { BulkActions } from "@/components/suppliers/bulk-actions";
 import { SupplierForm } from "@/components/suppliers/supplier-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useLanguage } from "@/components/language/language-provider";
+import { useTranslations } from "next-intl";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface Supplier {
   id: string;
@@ -23,6 +26,10 @@ interface Supplier {
 
 export default function SuppliersPage() {
   const router = useRouter();
+  const { isRTL } = useLanguage();
+  const commonT = useTranslations("common");
+  const suppliersT = useTranslations("suppliers");
+  
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -66,15 +73,15 @@ export default function SuppliersPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to delete supplier");
+        throw new Error(error.error || suppliersT("deleteError"));
       }
 
-      toast.success("Supplier deleted successfully");
+      toast.success(suppliersT("deleteSuccess"));
       fetchSuppliers();
       router.refresh();
     } catch (error) {
       console.error("Error deleting supplier:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete supplier");
+      toast.error(error instanceof Error ? error.message : suppliersT("deleteError"));
     }
   };
 
@@ -82,7 +89,7 @@ export default function SuppliersPage() {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/suppliers/${supplierId}`);
-      if (!response.ok) throw new Error("Failed to fetch supplier");
+      if (!response.ok) throw new Error(suppliersT("fetchError"));
       
       const data = await response.json();
       
@@ -93,7 +100,7 @@ export default function SuppliersPage() {
       });
     } catch (error) {
       console.error("Error fetching supplier:", error);
-      toast.error("Failed to load supplier data");
+      toast.error(suppliersT("fetchError"));
     } finally {
       setIsLoading(false);
     }
@@ -110,14 +117,14 @@ export default function SuppliersPage() {
       });
 
       const response = await fetch(`/api/suppliers?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch suppliers");
+      if (!response.ok) throw new Error(suppliersT("fetchError"));
 
       const data = await response.json();
       setSuppliers(data.suppliers);
       setTotal(data.total);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
-      toast.error("Failed to load suppliers");
+      toast.error(suppliersT("fetchError"));
     } finally {
       setIsLoading(false);
     }
@@ -132,25 +139,25 @@ export default function SuppliersPage() {
     <div className="container mx-auto py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Suppliers</h1>
+          <h1 className="text-2xl font-bold">{suppliersT("title")}</h1>
           <p className="text-muted-foreground">
-            Manage your suppliers and vendor relationships
+            {suppliersT("subtitle")}
           </p>
         </div>
         <Button onClick={() => setFormDialog({ isOpen: true, supplierId: null, supplierData: null })}>
-          <PlusIcon className="w-4 h-4 mr-2" />
-          Add Supplier
+          <PlusIcon className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+          {suppliersT("addSupplier")}
         </Button>
       </div>
 
       <div className="mb-6">
         <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <SearchIcon className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4`} />
           <Input
-            placeholder="Search suppliers..."
+            placeholder={suppliersT("searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
+            className={isRTL ? 'pr-10' : 'pl-10'}
           />
         </div>
       </div>
@@ -168,24 +175,21 @@ export default function SuppliersPage() {
         <>
           <div className="rounded-lg border bg-card">
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-4 w-8"></th>
-                    <th className="text-left p-4">Name</th>
-                    <th className="text-left p-4">Contact</th>
-                    <th className="text-left p-4">Address</th>
-                    <th className="text-right p-4">Products</th>
-                    <th className="text-right p-4">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-8"></TableHead>
+                    <TableHead>{commonT("name")}</TableHead>
+                    <TableHead>{commonT("phone")}</TableHead>
+                    <TableHead>{commonT("address")}</TableHead>
+                    <TableHead className={isRTL ? "text-left" : "text-right"}>{commonT("products")}</TableHead>
+                    <TableHead className={isRTL ? "text-left" : "text-right"}>{commonT("actions")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {suppliers.map((supplier) => (
-                    <tr 
-                      key={supplier.id} 
-                      className="border-b hover:bg-muted/50"
-                    >
-                      <td className="p-4">
+                    <TableRow key={supplier.id}>
+                      <TableCell>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -198,20 +202,20 @@ export default function SuppliersPage() {
                             <Square className="h-4 w-4" />
                           )}
                         </Button>
-                      </td>
-                      <td className="p-4">{supplier.name}</td>
-                      <td className="p-4">
+                      </TableCell>
+                      <TableCell>{supplier.name}</TableCell>
+                      <TableCell>
                         <div className="flex items-center text-sm">
-                          <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <Phone className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'} text-muted-foreground`} />
                           <span>{supplier.phone}</span>
                         </div>
-                      </td>
-                      <td className="p-4">{supplier.address}</td>
-                      <td className="p-4 text-right">
+                      </TableCell>
+                      <TableCell>{supplier.address}</TableCell>
+                      <TableCell className={isRTL ? "text-left" : "text-right"}>
                         {supplier._count.products}
-                      </td>
-                      <td className="p-4 text-right">
-                        <div className="flex justify-end gap-2">
+                      </TableCell>
+                      <TableCell className={isRTL ? "text-left" : "text-right"}>
+                        <div className={`flex ${isRTL ? "justify-start" : "justify-end"} gap-2`}>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -233,18 +237,18 @@ export default function SuppliersPage() {
                             <Trash2Icon className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </div>
 
           {/* Pagination */}
           <div className="mt-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {suppliers.length} of {total} suppliers
+              {commonT("showing")} {suppliers.length} {commonT("of")} {total} {suppliersT("suppliers")}
             </p>
             <div className="flex gap-2">
               <Button
@@ -253,7 +257,7 @@ export default function SuppliersPage() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
-                Previous
+                {commonT("previous")}
               </Button>
               <Button
                 variant="outline"
@@ -261,7 +265,7 @@ export default function SuppliersPage() {
                 onClick={() => setPage((p) => p + 1)}
                 disabled={page * limit >= total}
               >
-                Next
+                {commonT("next")}
               </Button>
             </div>
           </div>
@@ -277,8 +281,8 @@ export default function SuppliersPage() {
           if (!deleteDialog.supplierId) return;
           await handleDelete(deleteDialog.supplierId);
         }}
-        title="Delete Supplier"
-        description={`Are you sure you want to delete "${deleteDialog.supplierName}"? This action cannot be undone. Suppliers with associated products cannot be deleted.`}
+        title={suppliersT("deleteSupplier")}
+        description={`${suppliersT("deleteConfirmation")} "${deleteDialog.supplierName}"? ${suppliersT("deleteWarning")}`}
       />
 
       <Dialog 
@@ -292,7 +296,7 @@ export default function SuppliersPage() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {formDialog.supplierId ? "Edit Supplier" : "Add Supplier"}
+              {formDialog.supplierId ? suppliersT("editSupplier") : suppliersT("addSupplier")}
             </DialogTitle>
           </DialogHeader>
           <SupplierForm 

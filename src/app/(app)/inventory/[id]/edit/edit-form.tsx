@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ProductFormData } from "@/lib/validations/product";
 import { useState, useEffect } from "react";
 import { ProductFormSkeleton } from "@/components/products/loading";
+import { useLanguage } from "@/components/language/language-provider";
 
 async function getProduct(id: string) {
   console.log('Fetching product with id:', id);
@@ -37,6 +38,7 @@ export default function EditProductForm({
   id: string;
 }) {
   const router = useRouter();
+  const { language } = useLanguage();
   const [product, setProduct] = useState<ProductFormData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -148,9 +150,9 @@ export default function EditProductForm({
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Edit Product</h1>
+        <h1 className="text-2xl font-bold">{language === "ar" ? "تعديل المنتج" : "Edit Product"}</h1>
         <Link href="/inventory">
-          <Button variant="outline">Back to Inventory</Button>
+          <Button variant="outline">{language === "ar" ? "العودة إلى المخزون" : "Back to Inventory"}</Button>
         </Link>
       </div>
 

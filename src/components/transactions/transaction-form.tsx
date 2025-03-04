@@ -22,6 +22,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Plus } from "lucide-react";
 import { transactionFormSchema } from "@/lib/validations";
 import { useCategoriesAndSuppliers } from "@/hooks/use-categories-and-suppliers";
+import { TranslatedText } from "@/components/language/translated-text";
+import { useLanguage } from "@/components/language/language-provider";
 
 type TransactionFormData = z.infer<typeof transactionFormSchema>;
 
@@ -44,6 +46,7 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   const { suppliers } = useCategoriesAndSuppliers();
+  const { language, isRTL } = useLanguage();
 
   const form = useForm<TransactionFormData>({
     resolver: zodResolver(transactionFormSchema),
@@ -88,16 +91,16 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
           setProducts(data.data.items);
         } else {
           console.error("Unexpected products data structure:", data);
-          toast.error("Failed to load products: Unexpected data format");
+          toast.error(language === "ar" ? "فشل في تحميل المنتجات: تنسيق بيانات غير متوقع" : "Failed to load products: Unexpected data format");
         }
       } catch (error) {
         console.error("Error fetching products:", error);
-        toast.error("Failed to load products");
+        toast.error(language === "ar" ? "فشل في تحميل المنتجات" : "Failed to load products");
       }
     };
 
     fetchProducts();
-  }, []);
+  }, [language]);
 
   // Fetch clients for SALE transactions
   useEffect(() => {
@@ -115,54 +118,54 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
             setClients(data.data.items);
           } else {
             console.error("Unexpected clients data structure:", data);
-            toast.error("Failed to load clients: Unexpected data format");
+            toast.error(language === "ar" ? "فشل في تحميل العملاء: تنسيق بيانات غير متوقع" : "Failed to load clients: Unexpected data format");
           }
         } catch (error) {
           console.error("Error fetching clients:", error);
-          toast.error("Failed to load clients");
+          toast.error(language === "ar" ? "فشل في تحميل العملاء" : "Failed to load clients");
         }
       };
 
       fetchClients();
     }
-  }, [type]);
+  }, [type, language]);
 
   const onSubmit = async (data: TransactionFormData) => {
     setIsLoading(true);
     try {
       // Validate required fields based on transaction type
       if (type === "SALE" && !data.clientId) {
-        toast.error("Client is required for sale transactions");
+        toast.error(language === "ar" ? "العميل مطلوب لمعاملات البيع" : "Client is required for sale transactions");
         setIsLoading(false);
         return;
       }
       
       if (type === "PURCHASE" && !data.supplierId) {
-        toast.error("Supplier is required for purchase transactions");
+        toast.error(language === "ar" ? "المورد مطلوب لمعاملات الشراء" : "Supplier is required for purchase transactions");
         setIsLoading(false);
         return;
       }
       
       // Validate items
       if (!data.items || data.items.length === 0) {
-        toast.error("At least one item is required");
+        toast.error(language === "ar" ? "مطلوب عنصر واحد على الأقل" : "At least one item is required");
         setIsLoading(false);
         return;
       }
       
       for (const item of data.items) {
         if (!item.productId) {
-          toast.error("Product is required for all items");
+          toast.error(language === "ar" ? "المنتج مطلوب لجميع العناصر" : "Product is required for all items");
           setIsLoading(false);
           return;
         }
         if (!item.quantity || item.quantity <= 0) {
-          toast.error("Quantity must be positive for all items");
+          toast.error(language === "ar" ? "يجب أن تكون الكمية موجبة لجميع العناصر" : "Quantity must be positive for all items");
           setIsLoading(false);
           return;
         }
         if (item.price < 0) {
-          toast.error("Price must be non-negative for all items");
+          toast.error(language === "ar" ? "يجب أن يكون السعر غير سالب لجميع العناصر" : "Price must be non-negative for all items");
           setIsLoading(false);
           return;
         }
@@ -190,7 +193,11 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
         throw new Error(errorData.error || "Failed to create transaction");
       }
 
-      toast.success(`${type === "PURCHASE" ? "Purchase" : "Sale"} recorded successfully`);
+      toast.success(
+        language === "ar" 
+          ? `تم تسجيل ${type === "PURCHASE" ? "الشراء" : "البيع"} بنجاح` 
+          : `${type === "PURCHASE" ? "Purchase" : "Sale"} recorded successfully`
+      );
       
       if (onSuccess) {
         onSuccess();
@@ -200,7 +207,13 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
       }
     } catch (error) {
       console.error("Error creating transaction:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to create transaction");
+      toast.error(
+        error instanceof Error 
+          ? error.message 
+          : language === "ar" 
+            ? "فشل في إنشاء المعاملة" 
+            : "Failed to create transaction"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -224,14 +237,14 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
               name="clientId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Client</FormLabel>
+                  <FormLabel><TranslatedText namespace="common" id="client" /></FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a client" />
+                        <SelectValue placeholder={language === "ar" ? "اختر عميلاً" : "Select a client"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -252,14 +265,14 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
               name="supplierId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Supplier</FormLabel>
+                  <FormLabel><TranslatedText namespace="common" id="supplier" /></FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a supplier" />
+                        <SelectValue placeholder={language === "ar" ? "اختر مورداً" : "Select a supplier"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -282,19 +295,23 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormLabel><TranslatedText namespace="common" id="status" /></FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder={language === "ar" ? "اختر الحالة" : "Select status"} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="PENDING">Pending</SelectItem>
-                    <SelectItem value="COMPLETED">Completed</SelectItem>
+                    <SelectItem value="PENDING">
+                      <TranslatedText namespace="transactions" id="status.pending" />
+                    </SelectItem>
+                    <SelectItem value="COMPLETED">
+                      <TranslatedText namespace="transactions" id="status.completed" />
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -312,16 +329,16 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
                 name="amountPaid"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Amount Paid</FormLabel>
+                    <FormLabel><TranslatedText namespace="transactions" id="amountPaid" /></FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">DH</span>
+                        <span className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-muted-foreground`}>DH</span>
                         <Input
                           type="number"
                           step="0.01"
                           min="0"
                           placeholder="0.00"
-                          className="pl-9"
+                          className={isRTL ? 'pr-9' : 'pl-9'}
                           {...field}
                           onChange={(e) => {
                             const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
@@ -340,20 +357,26 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
                 name="paymentMethod"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Payment Method</FormLabel>
+                    <FormLabel><TranslatedText namespace="transactions" id="paymentMethod" /></FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select payment method" />
+                          <SelectValue placeholder={language === "ar" ? "اختر طريقة الدفع" : "Select payment method"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="CASH">Cash</SelectItem>
-                        <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
-                        <SelectItem value="CHECK">Check</SelectItem>
+                        <SelectItem value="CASH">
+                          <TranslatedText namespace="transactions" id="paymentMethods.cash" />
+                        </SelectItem>
+                        <SelectItem value="BANK_TRANSFER">
+                          <TranslatedText namespace="transactions" id="paymentMethods.bankTransfer" />
+                        </SelectItem>
+                        <SelectItem value="CHECK">
+                          <TranslatedText namespace="transactions" id="paymentMethods.check" />
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -366,10 +389,13 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
                 name="reference"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Reference (Optional)</FormLabel>
+                    <FormLabel>
+                      <TranslatedText namespace="transactions" id="reference" /> 
+                      ({language === "ar" ? "اختياري" : "Optional"})
+                    </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Check number or transfer reference"
+                        placeholder={language === "ar" ? "رقم الشيك أو مرجع التحويل" : "Check number or transfer reference"}
                         {...field}
                         value={field.value || ""}
                       />
@@ -385,15 +411,17 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
         {/* Items */}
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Items</h3>
+            <h3 className="text-lg font-medium">
+              <TranslatedText namespace="transactions" id="items" />
+            </h3>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => append({ productId: "", quantity: 1, price: 0 })}
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
+              <Plus className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+              <TranslatedText namespace="transactions" id="addItem" />
             </Button>
           </div>
 
@@ -407,7 +435,7 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
                       name={`items.${index}.productId`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Product</FormLabel>
+                          <FormLabel><TranslatedText namespace="common" id="product" /></FormLabel>
                           <Select
                             onValueChange={(value) => {
                               field.onChange(value);
@@ -417,7 +445,7 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select a product" />
+                                <SelectValue placeholder={language === "ar" ? "اختر منتجاً" : "Select a product"} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -440,7 +468,7 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
                       name={`items.${index}.quantity`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Quantity</FormLabel>
+                          <FormLabel><TranslatedText namespace="common" id="quantity" /></FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -465,16 +493,16 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
                       name={`items.${index}.price`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Price</FormLabel>
+                          <FormLabel><TranslatedText namespace="common" id="price" /></FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">DH</span>
+                              <span className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-muted-foreground`}>DH</span>
                               <Input
                                 type="number"
                                 step="0.01"
                                 min="0"
                                 placeholder="0.00"
-                                className="pl-9"
+                                className={isRTL ? 'pr-9' : 'pl-9'}
                                 {...field}
                                 onChange={(e) => {
                                   const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
@@ -512,10 +540,13 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes (Optional)</FormLabel>
+              <FormLabel>
+                <TranslatedText namespace="common" id="notes" /> 
+                ({language === "ar" ? "اختياري" : "Optional"})
+              </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Add any additional notes here"
+                  placeholder={language === "ar" ? "أضف أي ملاحظات إضافية هنا" : "Add any additional notes here"}
                   className="resize-none"
                   {...field}
                   value={field.value || ""}
@@ -531,15 +562,15 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
           <CardContent className="pt-6">
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Total</span>
+                <span className="text-muted-foreground"><TranslatedText namespace="common" id="total" /></span>
                 <span className="font-medium">DH {total.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Amount Paid</span>
+                <span className="text-muted-foreground"><TranslatedText namespace="transactions" id="amountPaid" /></span>
                 <span className="font-medium">DH {amountPaid.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Remaining</span>
+                <span className="text-muted-foreground"><TranslatedText namespace="transactions" id="remaining" /></span>
                 <span className={`font-medium ${remainingAmount > 0 ? "text-destructive" : ""}`}>
                   DH {remainingAmount.toFixed(2)}
                 </span>
@@ -548,17 +579,20 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-2">
+        <div className={`flex justify-end gap-2 ${isRTL ? 'space-x-reverse' : ''}`}>
           <Button
             type="button"
             variant="outline"
             onClick={() => router.back()}
             disabled={isLoading}
           >
-            Cancel
+            <TranslatedText namespace="common" id="cancel" />
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save Transaction"}
+            {isLoading 
+              ? (language === "ar" ? "جاري الحفظ..." : "Saving...") 
+              : (language === "ar" ? "حفظ المعاملة" : "Save Transaction")
+            }
           </Button>
         </div>
       </form>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ArrowUpRight, ArrowDownRight, Calendar, User, DollarSign, CreditCard, FileText, CreditCard as CreditCardIcon } from "lucide-react";
 import { PaymentHistory } from "@/components/payments/payment-history";
+import { useLanguage } from "@/components/language/language-provider";
 
 interface Product {
   id: string;
@@ -53,6 +54,8 @@ interface TransactionDetailsProps {
 
 export function TransactionDetails({ transaction, onClose }: TransactionDetailsProps) {
   const router = useRouter();
+  const { language, isRTL } = useLanguage();
+  
   const [isUpdating, setIsUpdating] = useState(false);
   const [transactionData, setTransactionData] = useState(transaction);
 
@@ -98,12 +101,12 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
         throw new Error(error.error || "Failed to update transaction status");
       }
 
-      toast.success("Transaction status updated successfully");
+      toast.success(language === "ar" ? "تم تحديث حالة المعاملة بنجاح" : "Transaction status updated successfully");
       router.refresh();
       onClose();
     } catch (error) {
       console.error("Error updating transaction status:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to update transaction status");
+      toast.error(error instanceof Error ? error.message : (language === "ar" ? "فشل في تحديث حالة المعاملة" : "Failed to update transaction status"));
     } finally {
       setIsUpdating(false);
     }
@@ -130,14 +133,14 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
   };
 
   const getPaymentMethodLabel = (method: string | null | undefined) => {
-    if (!method) return "Not specified";
+    if (!method) return language === "ar" ? "غير محدد" : "Not specified";
     switch (method) {
       case "CASH":
-        return "Cash";
+        return language === "ar" ? "نقدًا" : "Cash";
       case "BANK_TRANSFER":
-        return "Bank Transfer";
+        return language === "ar" ? "تحويل بنكي" : "Bank Transfer";
       case "CHECK":
-        return "Check";
+        return language === "ar" ? "شيك" : "Check";
       default:
         return method;
     }
@@ -153,10 +156,12 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
             ) : (
               <ArrowUpRight className="mr-2 h-5 w-5 text-green-600" />
             )}
-            {transaction.type === "PURCHASE" ? "Purchase" : "Sale"} Details
+            {transaction.type === "PURCHASE" 
+              ? (language === "ar" ? "تفاصيل الشراء" : "Purchase Details") 
+              : (language === "ar" ? "تفاصيل البيع" : "Sale Details")}
           </DialogTitle>
           <DialogDescription>
-            Transaction ID: {transaction.id}
+            {language === "ar" ? `رقم المعاملة: ${transaction.id}` : `Transaction ID: ${transaction.id}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -165,17 +170,23 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Transaction Info</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {language === "ar" ? "معلومات المعاملة" : "Transaction Info"}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Date: {formatDate(transaction.createdAt)}</span>
+                  <span className="text-sm">
+                    {language === "ar" ? `التاريخ: ${formatDate(transaction.createdAt)}` : `Date: ${formatDate(transaction.createdAt)}`}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">
-                    {transaction.type === "PURCHASE" ? "Supplier: " : "Client: "}
+                    {transaction.type === "PURCHASE" 
+                      ? (language === "ar" ? "المورد: " : "Supplier: ")
+                      : (language === "ar" ? "العميل: " : "Client: ")}
                     {transaction.type === "PURCHASE"
                       ? transaction.supplier?.name || "N/A"
                       : transaction.client?.name || "N/A"}
@@ -191,33 +202,49 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Payment Info</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {language === "ar" ? "معلومات الدفع" : "Payment Info"}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Total: DH {transaction.total.toFixed(2)}</span>
+                  <span className="text-sm">
+                    {language === "ar" 
+                      ? `المجموع: ${transaction.total.toFixed(2)} درهم` 
+                      : `Total: DH ${transaction.total.toFixed(2)}`}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Paid: DH {(transactionData?.amountPaid || 0).toFixed(2)}</span>
+                  <span className="text-sm">
+                    {language === "ar" 
+                      ? `المدفوع: ${(transactionData?.amountPaid || 0).toFixed(2)} درهم` 
+                      : `Paid: DH ${(transactionData?.amountPaid || 0).toFixed(2)}`}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                   <span className={`text-sm ${(transactionData?.remainingAmount || 0) > 0 ? "text-destructive" : ""}`}>
-                    Remaining: DH {(transactionData?.remainingAmount || 0).toFixed(2)}
+                    {language === "ar" 
+                      ? `المتبقي: ${(transactionData?.remainingAmount || 0).toFixed(2)} درهم` 
+                      : `Remaining: DH ${(transactionData?.remainingAmount || 0).toFixed(2)}`}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">
-                    Payment Method: {getPaymentMethodLabel(transaction.paymentMethod)}
+                    {language === "ar" 
+                      ? `طريقة الدفع: ${getPaymentMethodLabel(transaction.paymentMethod)}` 
+                      : `Payment Method: ${getPaymentMethodLabel(transaction.paymentMethod)}`}
                   </span>
                 </div>
                 {transaction.reference && (
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Reference: {transaction.reference}</span>
+                    <span className="text-sm">
+                      {language === "ar" ? `المرجع: ${transaction.reference}` : `Reference: ${transaction.reference}`}
+                    </span>
                   </div>
                 )}
               </CardContent>
@@ -227,17 +254,27 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
           {/* Items */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Items</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {language === "ar" ? "العناصر" : "Items"}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="text-xs uppercase bg-muted/50">
                     <tr>
-                      <th className="px-4 py-2 text-left">Product</th>
-                      <th className="px-4 py-2 text-right">Quantity</th>
-                      <th className="px-4 py-2 text-right">Price</th>
-                      <th className="px-4 py-2 text-right">Total</th>
+                      <th className={`px-4 py-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+                        {language === "ar" ? "المنتج" : "Product"}
+                      </th>
+                      <th className={`px-4 py-2 ${isRTL ? 'text-left' : 'text-right'}`}>
+                        {language === "ar" ? "الكمية" : "Quantity"}
+                      </th>
+                      <th className={`px-4 py-2 ${isRTL ? 'text-left' : 'text-right'}`}>
+                        {language === "ar" ? "السعر" : "Price"}
+                      </th>
+                      <th className={`px-4 py-2 ${isRTL ? 'text-left' : 'text-right'}`}>
+                        {language === "ar" ? "المجموع" : "Total"}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -247,17 +284,27 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
                         <td className="px-4 py-2 text-right">
                           {item.quantity} {item.product.unit}
                         </td>
-                        <td className="px-4 py-2 text-right">DH {item.price.toFixed(2)}</td>
-                        <td className="px-4 py-2 text-right">
-                          DH {(item.quantity * item.price).toFixed(2)}
+                        <td className={`px-4 py-2 ${isRTL ? 'text-left' : 'text-right'}`}>
+                          {language === "ar" ? `${item.price.toFixed(2)} درهم` : `DH ${item.price.toFixed(2)}`}
+                        </td>
+                        <td className={`px-4 py-2 ${isRTL ? 'text-left' : 'text-right'}`}>
+                          {language === "ar" 
+                            ? `${(item.quantity * item.price).toFixed(2)} درهم` 
+                            : `DH ${(item.quantity * item.price).toFixed(2)}`}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot>
                     <tr className="font-medium">
-                      <td colSpan={3} className="px-4 py-2 text-right">Total</td>
-                      <td className="px-4 py-2 text-right">DH {transaction.total.toFixed(2)}</td>
+                      <td colSpan={3} className={`px-4 py-2 ${isRTL ? 'text-left' : 'text-right'}`}>
+                        {language === "ar" ? "المجموع" : "Total"}
+                      </td>
+                      <td className={`px-4 py-2 ${isRTL ? 'text-left' : 'text-right'}`}>
+                        {language === "ar" 
+                          ? `${transaction.total.toFixed(2)} درهم` 
+                          : `DH ${transaction.total.toFixed(2)}`}
+                      </td>
                     </tr>
                   </tfoot>
                 </table>
@@ -269,7 +316,9 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
           {transaction.notes && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Notes</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {language === "ar" ? "ملاحظات" : "Notes"}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm">{transaction.notes}</p>
@@ -280,9 +329,9 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
           {/* Payment History */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <CreditCardIcon className="h-4 w-4" />
-                Payment Management
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <CreditCardIcon className="h-4 w-4" />
+                  {language === "ar" ? "إدارة الدفع" : "Payment Management"}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -300,7 +349,9 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
             {transactionData.status === "PENDING" && (
               <div className="flex flex-col space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Update Status</span>
+                  <span className="text-sm font-medium">
+                    {language === "ar" ? "تحديث الحالة" : "Update Status"}
+                  </span>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
@@ -308,7 +359,7 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
                       onClick={() => handleStatusChange("COMPLETED")}
                       disabled={isUpdating}
                     >
-                      Mark as Completed
+                      {language === "ar" ? "تعيين كمكتمل" : "Mark as Completed"}
                     </Button>
                     <Button
                       size="sm"
@@ -317,7 +368,7 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
                       onClick={() => handleStatusChange("CANCELLED")}
                       disabled={isUpdating}
                     >
-                      Cancel Transaction
+                      {language === "ar" ? "إلغاء المعاملة" : "Cancel Transaction"}
                     </Button>
                   </div>
                 </div>
@@ -327,7 +378,7 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
 
           <div className="flex justify-end">
             <Button variant="outline" onClick={onClose}>
-              Close
+              {language === "ar" ? "إغلاق" : "Close"}
             </Button>
           </div>
         </div>

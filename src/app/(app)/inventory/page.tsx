@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { BulkActions } from "@/components/products/bulk-actions";
 import { useStockAlerts } from "@/hooks/use-stock-alerts";
 import { ProductDetailsDialog } from "@/components/products/product-details-dialog";
+import { useLanguage } from "@/components/language/language-provider";
 
 interface Product {
   id: string;
@@ -52,6 +53,7 @@ export default function InventoryPage() {
     productId: null,
     productName: "",
   });
+  const { language, isRTL } = useLanguage();
   const limit = 10;
 
   const toggleProductSelection = (productId: string) => {
@@ -74,12 +76,18 @@ export default function InventoryPage() {
         throw new Error(error.message || "Failed to delete product");
       }
 
-      toast.success("Product deleted successfully");
+      const successMessage = language === "ar" ? "تم حذف المنتج بنجاح" : "Product deleted successfully";
+      toast.success(successMessage);
       fetchProducts();
       router.refresh();
     } catch (error) {
       console.error("Error deleting product:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete product");
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : language === "ar" 
+          ? "فشل في حذف المنتج" 
+          : "Failed to delete product";
+      toast.error(errorMessage);
     }
   };
 
@@ -94,7 +102,7 @@ export default function InventoryPage() {
       });
 
       const response = await fetch(`/api/products?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch products");
+      if (!response.ok) throw new Error(language === "ar" ? "فشل في تحميل المنتجات" : "Failed to fetch products");
 
       const data = await response.json();
       console.log("Products API response:", data);
@@ -110,14 +118,17 @@ export default function InventoryPage() {
         setTotal(data.total);
       } else {
         console.error("Unexpected products data structure:", data);
-        toast.error("Failed to load products: Unexpected data format");
+        const errorMessage = language === "ar" 
+          ? "فشل في تحميل المنتجات: تنسيق بيانات غير متوقع" 
+          : "Failed to load products: Unexpected data format";
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [search, page]);
+  }, [search, page, language]);
 
   // Fetch products when component mounts or search/page changes
   useEffect(() => {
@@ -128,25 +139,27 @@ export default function InventoryPage() {
     <div className="container mx-auto py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Inventory</h1>
+          <h1 className="text-2xl font-bold">
+            {language === "ar" ? "المخزون" : "Inventory"}
+          </h1>
           <p className="text-muted-foreground">
-            Manage your products and stock levels
+            {language === "ar" ? "إدارة المنتجات ومستويات المخزون" : "Manage your products and stock levels"}
           </p>
         </div>
         <Button onClick={() => router.push("/inventory/create")}>
-          <PlusIcon className="w-4 h-4 mr-2" />
-          Add Product
+          <PlusIcon className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+          {language === "ar" ? "إضافة منتج" : "Add Product"}
         </Button>
       </div>
 
       <div className="mb-6">
         <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <SearchIcon className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4`} />
           <Input
-            placeholder="Search products..."
+            placeholder={language === "ar" ? "البحث عن المنتجات..." : "Search products..."}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
+            className={isRTL ? 'pr-10' : 'pl-10'}
           />
         </div>
       </div>
@@ -164,17 +177,31 @@ export default function InventoryPage() {
         <>
           <div className="rounded-lg border bg-card">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className={`w-full ${isRTL ? 'text-right' : 'text-left'}`}>
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-4 w-8"></th>
-                    <th className="text-left p-4">Name</th>
-                    <th className="text-left p-4">SKU</th>
-                    <th className="text-left p-4">Category</th>
-                    <th className="text-left p-4">Supplier</th>
-                    <th className="text-right p-4">Price</th>
-                    <th className="text-right p-4">Quantity</th>
-                    <th className="text-right p-4">Actions</th>
+                    <th className={`${isRTL ? 'text-right' : 'text-left'} p-4 w-8`}></th>
+                    <th className={`${isRTL ? 'text-right' : 'text-left'} p-4`}>
+                      {language === "ar" ? "الاسم" : "Name"}
+                    </th>
+                    <th className={`${isRTL ? 'text-right' : 'text-left'} p-4`}>
+                      {language === "ar" ? "رمز المنتج" : "SKU"}
+                    </th>
+                    <th className={`${isRTL ? 'text-right' : 'text-left'} p-4`}>
+                      {language === "ar" ? "الفئة" : "Category"}
+                    </th>
+                    <th className={`${isRTL ? 'text-right' : 'text-left'} p-4`}>
+                      {language === "ar" ? "المورد" : "Supplier"}
+                    </th>
+                    <th className={`${isRTL ? 'text-left' : 'text-right'} p-4`}>
+                      {language === "ar" ? "السعر" : "Price"}
+                    </th>
+                    <th className={`${isRTL ? 'text-left' : 'text-right'} p-4`}>
+                      {language === "ar" ? "الكمية" : "Quantity"}
+                    </th>
+                    <th className={`${isRTL ? 'text-left' : 'text-right'} p-4`}>
+                      {language === "ar" ? "إجراءات" : "Actions"}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -212,18 +239,22 @@ export default function InventoryPage() {
                       <td className="p-4">{product.sku}</td>
                       <td className="p-4">{product.category.name}</td>
                       <td className="p-4">{product.supplier.name}</td>
-                      <td className="p-4 text-right">
+                      <td className={`p-4 ${isRTL ? 'text-left' : 'text-right'}`}>
                         {formatPrice(product.price)}
                       </td>
-                      <td className={`p-4 text-right ${
+                      <td className={`p-4 ${isRTL ? 'text-left' : 'text-right'} ${
                         alerts.some((alert) => alert.productId === product.id)
                           ? "text-warning"
                           : ""
                       }`}>
-                        {product.quantity} {product.unit}
+                        {product.quantity} {product.unit === "KG" 
+                          ? (language === "ar" ? "كغ" : "KG") 
+                          : product.unit === "PIECE" 
+                            ? (language === "ar" ? "قطعة" : "PIECE") 
+                            : product.unit}
                       </td>
-                      <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-end gap-2">
+                      <td className={`p-4 ${isRTL ? 'text-left' : 'text-right'}`} onClick={(e) => e.stopPropagation()}>
+                        <div className={`flex ${isRTL ? 'justify-start' : 'justify-end'} gap-2`}>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -245,7 +276,7 @@ export default function InventoryPage() {
                               router.push(`/inventory/${product.id}/edit`);
                             }}
                           >
-                            Edit
+                            {language === "ar" ? "تعديل" : "Edit"}
                           </Button>
                           <Button
                             variant="ghost"
@@ -273,7 +304,9 @@ export default function InventoryPage() {
           {/* Pagination */}
           <div className="mt-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {products.length} of {total} products
+              {language === "ar" ? "عرض" : "Showing"} {(page - 1) * limit + 1} {language === "ar" ? "إلى" : "to"}{" "}
+              {Math.min(page * limit, total)} {language === "ar" ? "من" : "of"}{" "}
+              {total} {language === "ar" ? "منتجات" : "products"}
             </p>
             <div className="flex gap-2">
               <Button
@@ -282,7 +315,7 @@ export default function InventoryPage() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
-                Previous
+                {language === "ar" ? "السابق" : "Previous"}
               </Button>
               <Button
                 variant="outline"
@@ -290,7 +323,7 @@ export default function InventoryPage() {
                 onClick={() => setPage((p) => p + 1)}
                 disabled={page * limit >= total}
               >
-                Next
+                {language === "ar" ? "التالي" : "Next"}
               </Button>
             </div>
           </div>
@@ -306,8 +339,12 @@ export default function InventoryPage() {
           if (!deleteDialog.productId) return;
           await handleDelete(deleteDialog.productId);
         }}
-        title="Delete Product"
-        description={`Are you sure you want to delete "${deleteDialog.productName}"? This action cannot be undone.`}
+        title={language === "ar" ? "حذف المنتج" : "Delete Product"}
+        description={
+          language === "ar" 
+            ? `هل أنت متأكد أنك تريد حذف "${deleteDialog.productName}"؟ لا يمكن التراجع عن هذا الإجراء.`
+            : `Are you sure you want to delete "${deleteDialog.productName}"? This action cannot be undone.`
+        }
       />
 
       <BulkActions
