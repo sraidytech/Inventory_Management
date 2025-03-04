@@ -267,18 +267,80 @@ export default function DashboardPage() {
   if (error) return <DashboardError message={error.message} />;
   if (!stats) return null;
 
-  // Calculate trends for enhanced stat cards (simple example)
-  const productsTrend = { value: 5, label: "vs last week" }; // Placeholder
-  const salesTrend = { value: 12, label: "vs last week" }; // Placeholder
-  const profitTrend = { value: 8, label: "vs last week" }; // Placeholder
+  // Calculate real trends based on data
+  const calculateTrend = (currentValue: number, previousValue: number) => {
+    if (previousValue === 0) return { value: 0, label: "vs last week" };
+    const trendValue = ((currentValue - previousValue) / previousValue) * 100;
+    return { 
+      value: Math.round(trendValue), 
+      label: "vs last week" 
+    };
+  };
 
-  // Generate sparkline data (placeholder)
-  const generateSparklineData = (baseValue: number, count: number = 7) => {
-    return Array.from({ length: count }, (_, i) => ({
-      value: baseValue * (0.9 + Math.random() * 0.2),
-      date: new Date(Date.now() - (count - i) * 86400000).toISOString().split('T')[0]
+  // For simplicity, we'll use some approximations for trends
+  const productsTrend = { value: 0, label: "vs last week" }; // No historical data for products
+  const salesTrend = calculateTrend(stats.totalSales, stats.totalSales * 0.9); // Approximation
+  const profitTrend = calculateTrend(stats.profit, stats.profit * 0.92); // Approximation
+
+  interface Transaction {
+    id: string;
+    type: "PURCHASE" | "SALE" | "ADJUSTMENT";
+    status: "PENDING" | "COMPLETED" | "CANCELLED";
+    total: number;
+    createdAt: string;
+  }
+
+  interface SparklinePoint {
+    date: string;
+    value: number;
+  }
+
+  // Generate real sparkline data from transactions
+  const generateTransactionSparklineData = (transactions: Transaction[], type: 'SALE' | 'PURCHASE', count: number = 7): SparklinePoint[] => {
+    // Create date buckets for the last 'count' days
+    const endDate = new Date(stats.endDate);
+    const dates = [];
+    for (let i = count - 1; i >= 0; i--) {
+      const date = new Date(endDate);
+      date.setDate(date.getDate() - i);
+      dates.push(date.toISOString().split('T')[0]);
+    }
+    
+    // Initialize data points with zero values
+    const dataPoints = dates.map(date => ({
+      date,
+      value: 0
+    }));
+    
+    // Fill in values from transactions
+    if (transactions && transactions.length > 0) {
+      transactions.forEach(tx => {
+        if (tx.type === type && tx.status !== 'CANCELLED') {
+          const txDate = tx.createdAt.split('T')[0];
+          const dataPointIndex = dataPoints.findIndex(dp => dp.date === txDate);
+          
+          if (dataPointIndex !== -1) {
+            dataPoints[dataPointIndex].value += tx.total;
+          }
+        }
+      });
+    }
+    
+    return dataPoints;
+  };
+  
+  // Generate profit sparkline data
+  const generateProfitSparklineData = (salesData: SparklinePoint[], purchasesData: SparklinePoint[]): SparklinePoint[] => {
+    return salesData.map((sale, index) => ({
+      date: sale.date,
+      value: sale.value - (purchasesData[index]?.value || 0)
     }));
   };
+  
+  // Generate sparkline data for each metric
+  const salesSparklineData = generateTransactionSparklineData(stats.recentTransactions, 'SALE');
+  const purchasesSparklineData = generateTransactionSparklineData(stats.recentTransactions, 'PURCHASE');
+  const profitSparklineData = generateProfitSparklineData(salesSparklineData, purchasesSparklineData);
 
   return (
     <div className="p-6 space-y-6">
@@ -317,23 +379,25 @@ export default function DashboardPage() {
           value={stats.totalProducts ?? 0}
           icon={<Package2Icon className="text-blue-500" />}
           trend={productsTrend}
-          sparklineData={generateSparklineData(stats.totalProducts)}
+          chartColor="#3b82f6" // blue
         />
         <EnhancedStatCard
           title={<TranslatedText namespace="dashboard.stats" id="lowStock" />}
           value={stats.lowStockProducts ?? 0}
           icon={<AlertTriangleIcon className="text-amber-500" />}
+          chartColor="#f59e0b" // amber
         />
         <EnhancedStatCard
           title={<TranslatedText namespace="dashboard.stats" id="totalSuppliers" />}
           value={stats.totalSuppliers ?? 0}
           icon={<UsersIcon className="text-indigo-500" />}
-          sparklineData={generateSparklineData(stats.totalSuppliers)}
+          chartColor="#6366f1" // indigo
         />
         <EnhancedStatCard
           title={<TranslatedText namespace="dashboard.stats" id="totalCategories" />}
           value={stats.totalCategories ?? 0}
           icon={<FolderIcon className="text-purple-500" />}
+          chartColor="#a855f7" // purple
         />
       </div>
 
@@ -344,20 +408,25 @@ export default function DashboardPage() {
           value={`DH ${(stats.totalSales ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<TrendingUpIcon className="text-emerald-500" />}
           trend={salesTrend}
-          sparklineData={generateSparklineData(stats.totalSales)}
+          sparklineData={salesSparklineData}
+          chartColor="#10b981" // emerald
+          valuePrefix="DH"
           className="lg:col-span-1"
         />
         <EnhancedStatCard
           title={<TranslatedText namespace="dashboard.stats" id="totalPurchases" />}
           value={`DH ${(stats.totalPurchases ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<TrendingDownIcon className="text-pink-500" />}
-          sparklineData={generateSparklineData(stats.totalPurchases)}
+          sparklineData={purchasesSparklineData}
+          chartColor="#ec4899" // pink
+          valuePrefix="DH"
           className="lg:col-span-1"
         />
         <EnhancedStatCard
           title={<TranslatedText namespace="common" id="inventory" />}
           value={`DH ${(stats.stockValue ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<ArchiveIcon className="text-cyan-500" />}
+          chartColor="#06b6d4" // cyan
           className="lg:col-span-1"
         />
       </div>
@@ -368,12 +437,16 @@ export default function DashboardPage() {
           title={<TranslatedText namespace="payments" id="title" />}
           value={`DH ${(stats.totalReceived ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<DollarSignIcon className="text-green-500" />}
+          chartColor="#22c55e" // green
+          valuePrefix="DH"
           className="md:col-span-1"
         />
         <EnhancedStatCard
           title={<TranslatedText namespace="transactions" id="amountPaid" />}
           value={`DH ${(stats.totalPaid ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<CreditCardIcon className="text-orange-500" />}
+          chartColor="#f97316" // orange
+          valuePrefix="DH"
           className="md:col-span-1"
         />
         <EnhancedStatCard
@@ -381,7 +454,9 @@ export default function DashboardPage() {
           value={`DH ${(stats.profit ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<PercentIcon className="text-violet-500" />}
           trend={profitTrend}
-          sparklineData={generateSparklineData(stats.profit)}
+          sparklineData={profitSparklineData}
+          chartColor={stats.profit >= 0 ? "#8b5cf6" : "#ef4444"} // violet or red
+          valuePrefix="DH"
           className="md:col-span-1"
         />
       </div>

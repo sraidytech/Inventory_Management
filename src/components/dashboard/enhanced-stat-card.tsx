@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { AreaChart, Area, ResponsiveContainer } from "recharts";
+import { StatAreaChart } from "@/components/ui/area-chart";
 
 interface SparklinePoint {
   value: number;
@@ -21,6 +21,8 @@ interface EnhancedStatCardProps {
   };
   sparklineData?: SparklinePoint[];
   className?: string;
+  chartColor?: string;
+  valuePrefix?: string;
 }
 
 export function EnhancedStatCard({
@@ -30,7 +32,20 @@ export function EnhancedStatCard({
   trend,
   sparklineData,
   className,
+  chartColor,
+  valuePrefix = "DH",
 }: EnhancedStatCardProps) {
+  // Determine chart color based on trend
+  const getChartColor = () => {
+    if (chartColor) return chartColor;
+    
+    if (trend) {
+      if (trend.value > 0) return "#10B981"; // green
+      if (trend.value < 0) return "#EF4444"; // red
+    }
+    
+    return "#6366F1"; // indigo (default)
+  };
 
   // Determine trend icon and color
   const getTrendIcon = () => {
@@ -63,46 +78,6 @@ export function EnhancedStatCard({
     }
   };
 
-  // Generate sparkline chart using Recharts
-  const generateSparkline = () => {
-    if (!sparklineData || sparklineData.length < 2) return null;
-    
-    // Use consistent colors based on title
-    const chartColor = "#10B981"; // Default green
-    
-    // Generate a unique ID for the gradient based on the component instance
-    const uniqueId = Math.random().toString(36).substring(2, 9);
-    
-    // For ReactNode titles, we can't use string methods, so we use a unique ID instead
-    const gradientId = `colorValue-${uniqueId}`;
-    
-    return (
-      <div className="mt-4 h-14">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={sparklineData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={chartColor} stopOpacity={0.4} />
-                <stop offset="100%" stopColor={chartColor} stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <Area 
-              type="natural" 
-              dataKey="value" 
-              stroke={chartColor} 
-              strokeWidth={1.5}
-              fillOpacity={1}
-              fill={`url(#${gradientId})`}
-              dot={false}
-              activeDot={false}
-              isAnimationActive={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-    );
-  };
-
   return (
     <Card className={cn(
       "shadow-sm transition-all hover:shadow-md",
@@ -121,7 +96,18 @@ export function EnhancedStatCard({
             </div>
           )}
         </div>
-        {generateSparkline()}
+        
+        {sparklineData && sparklineData.length > 0 && (
+          <div className="mt-4">
+            <StatAreaChart 
+              data={sparklineData}
+              color={getChartColor()}
+              height={60}
+              valuePrefix={valuePrefix}
+              showTooltip={true}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
