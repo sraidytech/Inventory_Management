@@ -14,6 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { useLanguage } from "@/components/language/language-provider"
+import { useTranslations } from "next-intl"
 
 interface DateRangePickerProps {
   startDate: string
@@ -35,7 +36,8 @@ export function DateRangePicker({
   className,
 }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false)
-  const { language, isRTL } = useLanguage();
+  const { isRTL } = useLanguage();
+  const t = useTranslations("dashboard");
   
   // Convert string dates to Date objects for the calendar
   const from = startDate ? new Date(startDate) : undefined
@@ -59,7 +61,7 @@ export function DateRangePicker({
   
   const buttonText = startDate && endDate 
     ? `${formatDisplayDate(startDate)} - ${formatDisplayDate(endDate)}` 
-    : language === "ar" ? "تصفية التاريخ" : "Date Filter"
+    : t("filter.dateFilter")
   
   const hasDateRange = startDate && endDate
 
@@ -99,7 +101,7 @@ export function DateRangePicker({
             }}
             size="sm"
           >
-            {language === "ar" ? "إعادة تعيين" : "Reset"}
+            {t("filter.reset")}
           </Button>
           <Button 
             onClick={() => {
@@ -123,7 +125,7 @@ export function DateRangePicker({
             disabled={!date?.from || !date?.to}
             size="sm"
           >
-            {language === "ar" ? "تطبيق التصفية" : "Apply Filter"}
+            {t("filter.applyFilter")}
           </Button>
         </div>
       </PopoverContent>

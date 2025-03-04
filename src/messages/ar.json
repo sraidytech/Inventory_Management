@@ -120,7 +120,9 @@
       "lastYear": "العام الماضي",
       "custom": "مخصص",
       "apply": "تطبيق",
-      "reset": "إعادة تعيين"
+      "reset": "إعادة تعيين",
+      "dateFilter": "تصفية التاريخ",
+      "applyFilter": "تطبيق التصفية"
     }
   },
   "products": {
@@ -263,9 +265,11 @@
   },
   "notifications": {
     "title": "الإشعارات",
+    "description": "إدارة الإشعارات والتنبيهات",
     "markAllAsRead": "تعيين الكل كمقروء",
     "clearAll": "مسح الكل",
     "noNotifications": "لا توجد إشعارات",
+    "unreadCount": "الإشعارات غير المقروءة:",
     "types": {
       "stockAlert": "تنبيه المخزون",
       "paymentDue": "دفعة مستحقة",

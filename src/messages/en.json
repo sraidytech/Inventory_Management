@@ -120,7 +120,9 @@
       "lastYear": "Last Year",
       "custom": "Custom",
       "apply": "Apply",
-      "reset": "Reset"
+      "reset": "Reset",
+      "dateFilter": "Date Filter",
+      "applyFilter": "Apply Filter"
     }
   },
   "products": {
@@ -263,9 +265,11 @@
   },
   "notifications": {
     "title": "Notifications",
+    "description": "Manage your notifications and alerts",
     "markAllAsRead": "Mark All as Read",
     "clearAll": "Clear All",
     "noNotifications": "No notifications",
+    "unreadCount": "Unread notifications:",
     "types": {
       "stockAlert": "Stock Alert",
       "paymentDue": "Payment Due",
