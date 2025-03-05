@@ -13,6 +13,9 @@
     "create": "Create",
     "search": "Search",
     "filter": "Filter",
+    "export": "Export",
+    "applyFilters": "Apply Filters",
+    "detailedReports": "Detailed Reports",
     "actions": "Actions",
     "status": "Status",
     "date": "Date",
@@ -298,6 +301,23 @@
     "saveChanges": "Save Changes",
     "savingChanges": "Saving...",
     "settingsUpdated": "Settings updated successfully"
+  },
+  "reports": {
+    "title": "Reports",
+    "filters": "Filters",
+    "salesReport": "Sales",
+    "inventoryReport": "Inventory",
+    "productsReport": "Products",
+    "suppliersReport": "Suppliers",
+    "clientsReport": "Clients",
+    "profitReport": "Profit",
+    "salesOverTime": "Sales Over Time",
+    "salesTransactions": "Sales Transactions",
+    "inventoryStatus": "Inventory Status",
+    "topProducts": "Top Products by Sales",
+    "topSuppliers": "Top Suppliers by Purchase Volume",
+    "topClients": "Top Clients by Purchase Volume",
+    "profitAnalysis": "Profit Analysis"
   },
   "errors": {
     "somethingWentWrong": "Something went wrong",

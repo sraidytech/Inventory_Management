@@ -423,10 +423,13 @@ export default function DashboardPage() {
           className="lg:col-span-1"
         />
         <EnhancedStatCard
-          title={<TranslatedText namespace="common" id="inventory" />}
-          value={`DH ${(stats.stockValue ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={<ArchiveIcon className="text-cyan-500" />}
-          chartColor="#06b6d4" // cyan
+          title={<TranslatedText namespace="dashboard.stats" id="totalProfit" />}
+          value={`DH ${(stats.profit ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          icon={<PercentIcon className="text-violet-500" />}
+          trend={profitTrend}
+          sparklineData={profitSparklineData}
+          chartColor={stats.profit >= 0 ? "#8b5cf6" : "#ef4444"} // violet or red
+          valuePrefix="DH"
           className="lg:col-span-1"
         />
       </div>
@@ -450,13 +453,10 @@ export default function DashboardPage() {
           className="md:col-span-1"
         />
         <EnhancedStatCard
-          title={<TranslatedText namespace="dashboard.stats" id="totalProfit" />}
-          value={`DH ${(stats.profit ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={<PercentIcon className="text-violet-500" />}
-          trend={profitTrend}
-          sparklineData={profitSparklineData}
-          chartColor={stats.profit >= 0 ? "#8b5cf6" : "#ef4444"} // violet or red
-          valuePrefix="DH"
+          title={<TranslatedText namespace="common" id="inventory" />}
+          value={`DH ${(stats.stockValue ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          icon={<ArchiveIcon className="text-cyan-500" />}
+          chartColor="#06b6d4" // cyan
           className="md:col-span-1"
         />
       </div>

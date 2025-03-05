@@ -13,6 +13,9 @@
     "create": "إنشاء",
     "search": "بحث",
     "filter": "تصفية",
+    "export": "تصدير",
+    "applyFilters": "تطبيق التصفية",
+    "detailedReports": "تقارير مفصلة",
     "actions": "إجراءات",
     "status": "الحالة",
     "date": "التاريخ",
@@ -298,6 +301,23 @@
     "saveChanges": "حفظ التغييرات",
     "savingChanges": "جاري الحفظ...",
     "settingsUpdated": "تم تحديث الإعدادات بنجاح"
+  },
+  "reports": {
+    "title": "التقارير",
+    "filters": "التصفية",
+    "salesReport": "المبيعات",
+    "inventoryReport": "المخزون",
+    "productsReport": "المنتجات",
+    "suppliersReport": "الموردين",
+    "clientsReport": "العملاء",
+    "profitReport": "الأرباح",
+    "salesOverTime": "المبيعات عبر الزمن",
+    "salesTransactions": "معاملات المبيعات",
+    "inventoryStatus": "حالة المخزون",
+    "topProducts": "أفضل المنتجات مبيعاً",
+    "topSuppliers": "أفضل الموردين حسب حجم الشراء",
+    "topClients": "أفضل العملاء حسب حجم الشراء",
+    "profitAnalysis": "تحليل الأرباح"
   },
   "errors": {
     "somethingWentWrong": "حدث خطأ ما",
