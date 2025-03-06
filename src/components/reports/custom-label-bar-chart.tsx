@@ -1,7 +1,7 @@
 "use client"
 
 import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, ResponsiveContainer } from "recharts"
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
 import {
   Card,
@@ -11,12 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
+import { ChartConfig } from "@/components/ui/chart"
+import { CustomTooltip } from "./shared-chart-components"
 
 interface CustomLabelBarChartProps {
   title: React.ReactNode
@@ -40,6 +36,11 @@ export function CustomLabelBarChart({
   className,
   primaryDataKey = "desktop",
 }: CustomLabelBarChartProps) {
+  // Get colors from config
+  const getColorForKey = (key: string): string => {
+    return config[key]?.color || `hsl(var(--chart-${Object.keys(config).indexOf(key) + 1}))`
+  }
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -47,7 +48,7 @@ export function CustomLabelBarChart({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={config}>
+        <div className="w-full h-[250px]">
           <ResponsiveContainer width="100%" height={250}>
             <BarChart
               data={data}
@@ -75,10 +76,12 @@ export function CustomLabelBarChart({
                 hide
               />
               <XAxis dataKey={primaryDataKey} type="number" hide />
-              <ChartTooltip
-                cursor={undefined}
+              <Tooltip
+                cursor={false}
                 content={
-                  <ChartTooltipContent 
+                  <CustomTooltip 
+                    active={false} // This will be overridden by Recharts
+                    payload={[]} // This will be overridden by Recharts
                     indicator="line" 
                     labelFormatter={(value) => {
                       if (typeof value === 'string' && value.includes('-')) {
@@ -97,15 +100,16 @@ export function CustomLabelBarChart({
               />
               <Bar
                 dataKey={primaryDataKey}
+                name={config[primaryDataKey]?.label || primaryDataKey}
                 layout="vertical"
-                fill={`var(--color-${primaryDataKey})`}
+                fill={getColorForKey(primaryDataKey)}
                 radius={4}
               >
                 <LabelList
                   dataKey="month"
                   position="insideLeft"
                   offset={8}
-                  className="fill-[--color-label]"
+                  className="fill-foreground"
                   fontSize={12}
                 />
                 <LabelList
@@ -116,9 +120,15 @@ export function CustomLabelBarChart({
                   fontSize={12}
                 />
               </Bar>
+              <Legend 
+                verticalAlign="top" 
+                height={36}
+                iconType="circle"
+                iconSize={8}
+              />
             </BarChart>
           </ResponsiveContainer>
-        </ChartContainer>
+        </div>
       </CardContent>
       {footer && (
         <CardFooter className="flex-col items-start gap-2 text-sm">

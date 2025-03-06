@@ -1,7 +1,7 @@
 "use client"
 
 import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
 import {
   Card,
@@ -11,12 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
+import { ChartConfig } from "@/components/ui/chart"
+import { CustomTooltip } from "./shared-chart-components"
 
 interface BarChartProps {
   title: React.ReactNode
@@ -35,9 +31,11 @@ export function BarChartMultiple({
   footer,
   className,
 }: BarChartProps) {
-  console.log("BarChartMultiple rendering with data:", data);
-  console.log("BarChartMultiple config:", config);
-  console.log("BarChartMultiple config keys:", Object.keys(config).filter(key => key !== 'label'));
+  // Get colors from config
+  const getColorForKey = (key: string): string => {
+    return config[key]?.color || `hsl(var(--chart-${Object.keys(config).indexOf(key) + 1}))`
+  }
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -45,7 +43,7 @@ export function BarChartMultiple({
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        <ChartContainer config={config}>
+        <div className="w-full h-[250px]">
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={data}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
@@ -64,10 +62,12 @@ export function BarChartMultiple({
                   return typeof value === 'string' ? value.slice(0, 3) : value;
                 }}
               />
-              <ChartTooltip
-                cursor={undefined}
+              <Tooltip
+                cursor={false}
                 content={
-                  <ChartTooltipContent 
+                  <CustomTooltip 
+                    active={false} // This will be overridden by Recharts
+                    payload={[]} // This will be overridden by Recharts
                     indicator="dashed" 
                     labelFormatter={(value) => {
                       if (typeof value === 'string' && value.includes('-')) {
@@ -84,20 +84,24 @@ export function BarChartMultiple({
                   />
                 }
               />
-              {Object.keys(config).filter(key => key !== 'label').map((key) => {
-                console.log(`Adding Bar for key ${key} with fill var(--color-${key})`);
-                return (
-                  <Bar 
-                    key={key}
-                    dataKey={key} 
-                    fill={`var(--color-${key})`} 
-                    radius={4} 
-                  />
-                );
-              })}
+              {Object.keys(config).filter(key => key !== 'label').map((key) => (
+                <Bar 
+                  key={key}
+                  dataKey={key} 
+                  name={config[key]?.label || key}
+                  fill={getColorForKey(key)} 
+                  radius={4} 
+                />
+              ))}
+              <Legend 
+                verticalAlign="top" 
+                height={36}
+                iconType="circle"
+                iconSize={8}
+              />
             </BarChart>
           </ResponsiveContainer>
-        </ChartContainer>
+        </div>
       </CardContent>
       {footer && (
         <CardFooter className="flex-col items-start gap-2 text-sm">

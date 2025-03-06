@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, Tooltip } from "recharts"
+import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
 import {
   Card,
@@ -10,13 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
+import { ChartConfig } from "@/components/ui/chart"
+import { CustomTooltip } from "./shared-chart-components"
 import {
   Select,
   SelectContent,
@@ -61,6 +56,11 @@ export function InteractiveAreaChart({
     })
   }, [data, timeRange])
 
+  // Get colors from config
+  const getColorForKey = (key: string): string => {
+    return config[key]?.color || `hsl(var(--chart-${Object.keys(config).indexOf(key) + 1}))`
+  }
+
   return (
     <Card className={className}>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
@@ -91,10 +91,7 @@ export function InteractiveAreaChart({
         </Select>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={config}
-          className="aspect-auto h-[250px] w-full"
-        >
+        <div className="aspect-auto h-[250px] w-full">
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={filteredData}>
               <defs>
@@ -102,12 +99,12 @@ export function InteractiveAreaChart({
                   <linearGradient key={key} id={`fill${key}`} x1="0" y1="0" x2="0" y2="1">
                     <stop
                       offset="5%"
-                      stopColor={`var(--color-${key})`}
+                      stopColor={getColorForKey(key)}
                       stopOpacity={0.8}
                     />
                     <stop
                       offset="95%"
-                      stopColor={`var(--color-${key})`}
+                      stopColor={getColorForKey(key)}
                       stopOpacity={0.1}
                     />
                   </linearGradient>
@@ -120,7 +117,7 @@ export function InteractiveAreaChart({
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                tickFormatter={(value) => {
+                tickFormatter={(value: string) => {
                   if (typeof value === 'string' && value.includes('-')) {
                     const date = new Date(value);
                     return date.toLocaleDateString("en-US", {
@@ -132,9 +129,12 @@ export function InteractiveAreaChart({
                 }}
               />
               <Tooltip
-                cursor={undefined}
+                cursor={false}
                 content={
-                  <ChartTooltipContent
+                  <CustomTooltip 
+                    active={false} // This will be overridden by Recharts
+                    payload={[]} // This will be overridden by Recharts
+                    indicator="dot"
                     labelFormatter={(value) => {
                       if (typeof value === 'string' && value.includes('-')) {
                         const date = new Date(value);
@@ -147,9 +147,6 @@ export function InteractiveAreaChart({
                       }
                       return value;
                     }}
-                    indicator="dot"
-                    valuePrefix=""
-                    valueSuffix=""
                   />
                 }
               />
@@ -157,16 +154,22 @@ export function InteractiveAreaChart({
                 <Area
                   key={key}
                   dataKey={key}
+                  name={config[key]?.label || key}
                   type="natural"
                   fill={`url(#fill${key})`}
-                  stroke={`var(--color-${key})`}
+                  stroke={getColorForKey(key)}
                   stackId="a"
                 />
               ))}
-              <ChartLegend content={<ChartLegendContent />} />
+              <Legend 
+                verticalAlign="top" 
+                height={36}
+                iconType="circle"
+                iconSize={8}
+              />
             </AreaChart>
           </ResponsiveContainer>
-        </ChartContainer>
+        </div>
       </CardContent>
     </Card>
   )

@@ -11,6 +11,7 @@ import { ThemeScriptServer } from "@/components/theme/theme-script-server"
 import { LanguageProvider } from "@/components/language/language-provider"
 import { LanguageScriptServer } from "@/components/language/language-script-server"
 import { NextIntlProvider } from "@/components/language/next-intl-provider"
+import { RechartsCursorFix } from "@/components/ui/recharts-cursor-fix"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,6 +53,7 @@ export default async function RootLayout({
               <NextIntlProvider>
                 {children}
                 <Toaster />
+                <RechartsCursorFix />
               </NextIntlProvider>
             </LanguageProvider>
           </ThemeProvider>

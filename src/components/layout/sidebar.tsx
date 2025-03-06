@@ -26,7 +26,8 @@ import {
   ChevronDown,
   Tags,
   UserCircle,
-  DollarSign
+  DollarSign,
+  BarChart
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -78,6 +79,12 @@ const routes: RouteItem[] = [
     icon: DollarSign,
     href: "/finance",
     color: "text-emerald-500"
+  },
+  {
+    label: "Reports",
+    icon: BarChart,
+    href: "/reports",
+    color: "text-purple-500"
   },
   {
     label: "Settings",

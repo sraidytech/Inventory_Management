@@ -1,7 +1,7 @@
 "use client"
 
 import { TrendingUp } from "lucide-react"
-import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, Tooltip } from "recharts"
+import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
 import {
   Card,
@@ -11,11 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
+import { ChartConfig } from "@/components/ui/chart"
+import { CustomTooltip } from "./shared-chart-components"
 
 interface AreaChartProps {
   title: React.ReactNode
@@ -36,9 +33,11 @@ export function AreaChartStacked({
   className,
   stacked = true,
 }: AreaChartProps) {
-  console.log("AreaChartStacked rendering with data:", data);
-  console.log("AreaChartStacked config:", config);
-  console.log("AreaChartStacked config keys:", Object.keys(config).filter(key => key !== 'label'));
+  // Get colors from config
+  const getColorForKey = (key: string): string => {
+    return config[key]?.color || `hsl(var(--chart-${Object.keys(config).indexOf(key) + 1}))`
+  }
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -48,7 +47,7 @@ export function AreaChartStacked({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={config}>
+        <div className="w-full h-[250px]">
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart
               data={data}
@@ -74,9 +73,11 @@ export function AreaChartStacked({
                 }}
               />
               <Tooltip
-                cursor={undefined}
+                cursor={false}
                 content={
-                  <ChartTooltipContent 
+                  <CustomTooltip 
+                    active={false} // This will be overridden by Recharts
+                    payload={[]} // This will be overridden by Recharts
                     indicator="dot" 
                     labelFormatter={(value) => {
                       if (typeof value === 'string' && value.includes('-')) {
@@ -93,23 +94,27 @@ export function AreaChartStacked({
                   />
                 }
               />
-              {Object.keys(config).filter(key => key !== 'label').map((key) => {
-                console.log(`Adding Area for key ${key} with fill var(--color-${key})`);
-                return (
-                  <Area
-                    key={key}
-                    dataKey={key}
-                    type="natural"
-                    fill={`var(--color-${key})`}
-                    fillOpacity={0.4}
-                    stroke={`var(--color-${key})`}
-                    stackId={stacked ? "a" : undefined}
-                  />
-                );
-              })}
+              {Object.keys(config).filter(key => key !== 'label').map((key) => (
+                <Area
+                  key={key}
+                  dataKey={key}
+                  name={config[key]?.label || key}
+                  type="natural"
+                  fill={getColorForKey(key)}
+                  fillOpacity={0.4}
+                  stroke={getColorForKey(key)}
+                  stackId={stacked ? "a" : undefined}
+                />
+              ))}
+              <Legend 
+                verticalAlign="top" 
+                height={36}
+                iconType="circle"
+                iconSize={8}
+              />
             </AreaChart>
           </ResponsiveContainer>
-        </ChartContainer>
+        </div>
       </CardContent>
       {footer && (
         <CardFooter>

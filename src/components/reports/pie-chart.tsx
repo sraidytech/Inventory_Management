@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Label, Pie, PieChart, ResponsiveContainer } from "recharts"
+import { Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
 import {
   Card,
@@ -11,12 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
+import type { ChartConfig } from "@/components/ui/chart"
+import { CustomTooltip } from "./shared-chart-components"
 
 interface PieChartProps {
   title: React.ReactNode
@@ -35,19 +31,12 @@ export function PieChartDonut({
   title,
   description,
   data,
+  // config is used in the interface but not in the implementation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   config,
   footer,
   className,
 }: PieChartProps) {
-  console.log("PieChartDonut rendering with data:", data);
-  console.log("PieChartDonut config:", config);
-  
-  // Add debugging for the fill property
-  console.log("PieChartDonut data with fill:", data.map(item => ({
-    ...item,
-    fill: item.fill || 'none'
-  })));
-  
   const totalValue = React.useMemo(() => {
     return data.reduce((acc, curr) => acc + curr.value, 0)
   }, [data])
@@ -59,16 +48,15 @@ export function PieChartDonut({
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={config}
-          className="mx-auto aspect-square max-h-[250px]"
-        >
+        <div className="mx-auto aspect-square max-h-[250px]">
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
-              <ChartTooltip
-                cursor={undefined}
+              <Tooltip
+                cursor={false}
                 content={
-                  <ChartTooltipContent 
+                  <CustomTooltip 
+                    active={false} // This will be overridden by Recharts
+                    payload={[]} // This will be overridden by Recharts
                     hideLabel 
                     valuePrefix=""
                     valueSuffix=""
@@ -78,7 +66,8 @@ export function PieChartDonut({
                           className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-[--color-bg]"
                           style={
                             {
-                              "--color-bg": item.fill,
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                              "--color-bg": (item as any).fill,
                             } as React.CSSProperties
                           }
                         />
@@ -98,7 +87,7 @@ export function PieChartDonut({
                 data={data.map(item => ({
                   ...item,
                   // Ensure fill is set
-                  fill: item.fill || `var(--color-${item.name.toLowerCase().replace(/\s+/g, '-')})` || 'hsl(var(--chart-1))'
+                  fill: item.fill || `hsl(var(--chart-${data.indexOf(item) + 1}))`
                 }))}
                 dataKey="value"
                 nameKey="name"
@@ -107,41 +96,36 @@ export function PieChartDonut({
                 cx="50%"
                 cy="50%"
                 outerRadius={80}
+              />
+              <Legend 
+                verticalAlign="bottom" 
+                height={36}
+                iconType="circle"
+                iconSize={8}
+              />
+              {/* Center label */}
+              <text
+                x="50%"
+                y="50%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="fill-foreground text-3xl font-bold"
               >
-                <Label
-                  content={({ viewBox }) => {
-                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                      return (
-                        <text
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          <tspan
-                            x={viewBox.cx}
-                            y={viewBox.cy}
-                            className="fill-foreground text-3xl font-bold"
-                          >
-                            {totalValue.toLocaleString()}
-                          </tspan>
-                          <tspan
-                            x={viewBox.cx}
-                            y={(viewBox.cy || 0) + 24}
-                            className="fill-muted-foreground"
-                          >
-                            Total
-                          </tspan>
-                        </text>
-                      )
-                    }
-                    return null
-                  }}
-                />
-              </Pie>
+                {totalValue.toLocaleString()}
+              </text>
+              <text
+                x="50%"
+                y="50%"
+                dy={24}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="fill-muted-foreground"
+              >
+                Total
+              </text>
             </PieChart>
           </ResponsiveContainer>
-        </ChartContainer>
+        </div>
       </CardContent>
       {footer && (
         <CardFooter className="flex-col gap-2 text-sm">

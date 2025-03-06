@@ -1,6 +1,6 @@
 "use client"
 
-import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer, Tooltip } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
 import {
   Card,
@@ -9,10 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  ChartConfig,
-  ChartContainer,
-} from "@/components/ui/chart"
+import { ChartConfig } from "@/components/ui/chart"
+import { CustomTooltip } from "./shared-chart-components"
 
 interface AdvancedTooltipChartProps {
   title: React.ReactNode
@@ -25,71 +23,6 @@ interface AdvancedTooltipChartProps {
   className?: string
 }
 
-// Define types for tooltip props and payload
-interface TooltipPayloadItem {
-  dataKey: string;
-  value: number;
-  color: string;
-  name: string;
-  payload: Record<string, unknown>;
-}
-
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: TooltipPayloadItem[];
-  config: ChartConfig;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  label?: any;
-}
-
-// Custom tooltip component
-const CustomTooltip = ({ active, payload, config }: CustomTooltipProps) => {
-  if (!active || !payload || payload.length === 0) {
-    return null;
-  }
-  
-  return (
-    <div className="bg-background border rounded-lg shadow-lg p-3 text-sm">
-      <div className="flex flex-col gap-2">
-        {payload.map((entry) => {
-          const key = entry.dataKey;
-          const value = entry.value;
-          const total = payload.reduce((acc, p) => {
-            return acc + (typeof p.value === 'number' ? p.value : 0);
-          }, 0);
-          const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
-          
-          return (
-            <div key={key} className="flex items-center gap-2">
-              <div
-                className="h-3 w-3 shrink-0 rounded-sm"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="text-foreground font-medium">{config[key]?.label || key}</span>
-              <span className="text-muted-foreground text-xs">({percentage}%)</span>
-              <span className="ml-auto font-mono font-medium">
-                {typeof value === 'number' ? value.toLocaleString() : value}
-                <span className="text-muted-foreground ml-1 font-normal">units</span>
-              </span>
-            </div>
-          );
-        })}
-        
-        {/* Total row */}
-        <div className="mt-2 pt-2 border-t flex items-center justify-between">
-          <span className="font-medium">Total:</span>
-          <span className="font-mono font-medium">
-            {payload.reduce((acc, p) => {
-              return acc + (typeof p.value === 'number' ? p.value : 0);
-            }, 0).toLocaleString()}
-            <span className="text-muted-foreground ml-1 font-normal">units</span>
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export function AdvancedTooltipChart({
   title,
   description,
@@ -98,6 +31,11 @@ export function AdvancedTooltipChart({
   className,
 }: AdvancedTooltipChartProps) {
   const dataKeys = Object.keys(config).filter(key => key !== 'label')
+  
+  // Get colors from config
+  const getColorForKey = (key: string): string => {
+    return config[key]?.color || `hsl(var(--chart-${Object.keys(config).indexOf(key) + 1}))`
+  }
   
   return (
     <Card className={className}>
@@ -108,7 +46,7 @@ export function AdvancedTooltipChart({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={config}>
+        <div className="w-full h-[250px]">
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={data}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
@@ -131,19 +69,40 @@ export function AdvancedTooltipChart({
                 <Bar
                   key={key}
                   dataKey={key}
+                  name={config[key]?.label || key}
                   stackId="a"
-                  fill={`var(--color-${key})`}
+                  fill={getColorForKey(key)}
                   radius={index === 0 ? [0, 0, 4, 4] : [4, 4, 0, 0]}
                 />
               ))}
               <Tooltip 
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                content={(props: any) => <CustomTooltip {...props} config={config} />}
-                cursor={undefined}
+                cursor={false}
+                content={
+                  <CustomTooltip 
+                    active={false} // This will be overridden by Recharts
+                    payload={[]} // This will be overridden by Recharts
+                    hideLabel={false}
+                    formatter={(value, name) => (
+                      <>
+                        <span className="text-foreground font-medium">{name}</span>
+                        <span className="ml-auto font-mono font-medium">
+                          {typeof value === 'number' ? value.toLocaleString() : value}
+                          <span className="text-muted-foreground ml-1 font-normal">units</span>
+                        </span>
+                      </>
+                    )}
+                  />
+                }
+              />
+              <Legend 
+                verticalAlign="top" 
+                height={36}
+                iconType="circle"
+                iconSize={8}
               />
             </BarChart>
           </ResponsiveContainer>
-        </ChartContainer>
+        </div>
       </CardContent>
     </Card>
   )

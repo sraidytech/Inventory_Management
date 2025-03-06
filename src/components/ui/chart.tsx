@@ -198,8 +198,10 @@ export function ChartTooltipContent({
   )
 }
 
+import { RechartsWrapper } from "./recharts-wrapper"
+
 export const ChartTooltip = ({ content, ...props }: { content: React.ReactNode; [key: string]: unknown }) => {
-  return <div {...props}>{content}</div>
+  return <RechartsWrapper component="div" {...props}>{content}</RechartsWrapper>
 }
 
 interface ChartLegendContentProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -234,5 +236,5 @@ export function ChartLegendContent({
 }
 
 export const ChartLegend = ({ content, ...props }: { content: React.ReactNode; [key: string]: unknown }) => {
-  return <div {...props}>{content}</div>
+  return <RechartsWrapper component="div" {...props}>{content}</RechartsWrapper>
 }
