@@ -66,7 +66,7 @@ export function PieChartDonut({
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <ChartTooltip
-                cursor={false}
+                cursor={undefined}
                 content={
                   <ChartTooltipContent 
                     hideLabel 

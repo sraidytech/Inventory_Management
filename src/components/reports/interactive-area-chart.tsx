@@ -132,7 +132,7 @@ export function InteractiveAreaChart({
                 }}
               />
               <Tooltip
-                cursor={false}
+                cursor={undefined}
                 content={
                   <ChartTooltipContent
                     labelFormatter={(value) => {
@@ -152,8 +152,6 @@ export function InteractiveAreaChart({
                     valueSuffix=""
                   />
                 }
-                wrapperStyle={{ zIndex: 100 }}
-                isAnimationActive={true}
               />
               {Object.keys(config).filter(key => key !== 'label').map((key) => (
                 <Area

@@ -50,7 +50,6 @@ export function CustomLabelBarChart({
         <ChartContainer config={config}>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart
-              accessibilityLayer
               data={data}
               layout="vertical"
               margin={{
@@ -77,7 +76,7 @@ export function CustomLabelBarChart({
               />
               <XAxis dataKey={primaryDataKey} type="number" hide />
               <ChartTooltip
-                cursor={false}
+                cursor={undefined}
                 content={
                   <ChartTooltipContent 
                     indicator="line" 

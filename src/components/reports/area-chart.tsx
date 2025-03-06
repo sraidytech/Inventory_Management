@@ -51,7 +51,6 @@ export function AreaChartStacked({
         <ChartContainer config={config}>
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart
-              accessibilityLayer
               data={data}
               margin={{
                 left: 12,
@@ -75,7 +74,7 @@ export function AreaChartStacked({
                 }}
               />
               <Tooltip
-                cursor={false}
+                cursor={undefined}
                 content={
                   <ChartTooltipContent 
                     indicator="dot" 
@@ -93,8 +92,6 @@ export function AreaChartStacked({
                     }}
                   />
                 }
-                wrapperStyle={{ zIndex: 100 }}
-                isAnimationActive={true}
               />
               {Object.keys(config).filter(key => key !== 'label').map((key) => {
                 console.log(`Adding Area for key ${key} with fill var(--color-${key})`);

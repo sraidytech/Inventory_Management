@@ -47,7 +47,7 @@ export function BarChartMultiple({
       <CardContent>
         <ChartContainer config={config}>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart accessibilityLayer data={data}>
+            <BarChart data={data}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
               <XAxis
                 dataKey="month"
@@ -65,7 +65,7 @@ export function BarChartMultiple({
                 }}
               />
               <ChartTooltip
-                cursor={false}
+                cursor={undefined}
                 content={
                   <ChartTooltipContent 
                     indicator="dashed" 

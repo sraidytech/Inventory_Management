@@ -110,7 +110,7 @@ export function AdvancedTooltipChart({
       <CardContent>
         <ChartContainer config={config}>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart accessibilityLayer data={data}>
+            <BarChart data={data}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
               <XAxis
                 dataKey="date"
@@ -139,9 +139,7 @@ export function AdvancedTooltipChart({
               <Tooltip 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 content={(props: any) => <CustomTooltip {...props} config={config} />}
-                cursor={false}
-                wrapperStyle={{ zIndex: 100 }}
-                isAnimationActive={true}
+                cursor={undefined}
               />
             </BarChart>
           </ResponsiveContainer>
