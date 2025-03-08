@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card"
 import type { ChartConfig } from "@/components/ui/chart"
 import { CustomTooltip } from "./shared-chart-components"
+import { TranslatedText } from "@/components/language/translated-text"
 
 interface PieChartProps {
   title: React.ReactNode
@@ -102,6 +103,16 @@ export function PieChartDonut({
                 height={36}
                 iconType="circle"
                 iconSize={8}
+                formatter={(value) => {
+                  // Check if the value is a translation key
+                  if (typeof value === 'string' && value.includes('.')) {
+                    const [namespace, key] = value.split('.');
+                    if (namespace && key) {
+                      return <TranslatedText namespace={namespace} id={key} />;
+                    }
+                  }
+                  return value;
+                }}
               />
               {/* Center label */}
               <text
@@ -121,7 +132,7 @@ export function PieChartDonut({
                 dominantBaseline="middle"
                 className="fill-muted-foreground"
               >
-                Total
+                <TranslatedText namespace="reports" id="total" />
               </text>
             </PieChart>
           </ResponsiveContainer>

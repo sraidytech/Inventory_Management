@@ -8,7 +8,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TranslatedText } from "@/components/language/translated-text";
 import { DashboardLoading, DashboardError } from "@/components/dashboard/loading";
-import { RefreshCw, Download } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 // Import our new chart components
 import { PieChartDonut } from "@/components/reports/pie-chart";
@@ -28,44 +28,44 @@ const REPORT_TYPES = {
   PROFIT: "profit",
 };
 
-// Chart configurations
+// Chart configurations with translation keys
 const salesChartConfig = {
   sales: {
-    label: "Sales",
+    label: "reports.sales",
     color: "hsl(var(--chart-1))",
   },
   transactions: {
-    label: "Transactions",
+    label: "reports.transactions",
     color: "hsl(var(--chart-2))",
   },
 };
 
 const inventoryChartConfig = {
   inStock: {
-    label: "In Stock",
+    label: "reports.inStock",
     color: "hsl(var(--chart-1))",
   },
   lowStock: {
-    label: "Low Stock",
+    label: "reports.lowStock",
     color: "hsl(var(--chart-2))",
   },
   outOfStock: {
-    label: "Out of Stock",
+    label: "reports.outOfStock",
     color: "hsl(var(--chart-3))",
   },
 };
 
 const profitChartConfig = {
   revenue: {
-    label: "Revenue",
+    label: "reports.revenue",
     color: "hsl(var(--chart-1))",
   },
   cost: {
-    label: "Cost",
+    label: "reports.cost",
     color: "hsl(var(--chart-2))",
   },
   profit: {
-    label: "Profit",
+    label: "reports.profit",
     color: "hsl(var(--chart-3))",
   },
 };
@@ -382,11 +382,6 @@ export default function ReportsPage() {
     // Data will be fetched by the useEffect hook
   };
 
-  // Handle export
-  const handleExport = () => {
-    alert("Export functionality would be implemented here");
-  };
-
   if (isLoading && !refreshing) return <DashboardLoading />;
   if (error) return <DashboardError message={error.message} />;
 
@@ -419,11 +414,6 @@ export default function ReportsPage() {
             onApply={handleDateRangeApply}
             onClear={handleDateRangeClear}
           />
-          
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            <TranslatedText namespace="common" id="export" />
-          </Button>
         </div>
       </div>
 
@@ -457,7 +447,7 @@ export default function ReportsPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <AreaChartStacked
               title={<TranslatedText namespace="reports" id="salesOverTime" />}
-              description="Sales over time"
+              description={<TranslatedText namespace="reports" id="salesOverTimeDesc" />}
               data={salesData.map(item => ({
                 month: item.date,
                 sales: item.sales
@@ -474,7 +464,7 @@ export default function ReportsPage() {
             
             <BarChartMultiple
               title={<TranslatedText namespace="reports" id="salesTransactions" />}
-              description="Number of transactions"
+              description={<TranslatedText namespace="reports" id="numberOfTransactions" />}
               data={salesData.map(item => ({
                 month: item.date,
                 transactions: item.transactions
@@ -491,12 +481,12 @@ export default function ReportsPage() {
           </div>
           
           <InteractiveAreaChart
-            title="Sales Analytics"
-            description="Interactive sales data visualization"
+            title={<TranslatedText namespace="reports" id="salesAnalytics" />}
+            description={<TranslatedText namespace="reports" id="interactiveSalesData" />}
             data={salesData.map(item => ({
               date: item.date,
               sales: item.sales,
-              transactions: item.transactions * 100 // Scale up for visibility
+              transactions: item.transactions
             }))}
             config={salesChartConfig}
           />
@@ -506,7 +496,7 @@ export default function ReportsPage() {
         <TabsContent value={REPORT_TYPES.INVENTORY} className="space-y-4">
           <AreaChartStacked
             title={<TranslatedText namespace="reports" id="inventoryStatus" />}
-            description="Inventory status over time"
+            description={<TranslatedText namespace="reports" id="inventoryStatusOverTime" />}
             data={inventoryData.map(item => ({
               month: item.date,
               inStock: item.inStock,
@@ -525,19 +515,19 @@ export default function ReportsPage() {
           
           <div className="grid gap-4 md:grid-cols-2">
             <CustomLabelBarChart
-              title="Stock Levels by Month"
-              description="Monthly inventory levels"
+              title={<TranslatedText namespace="reports" id="stockLevelsByMonth" />}
+              description={<TranslatedText namespace="reports" id="monthlyInventoryLevels" />}
               data={inventoryData.map(item => ({
                 month: item.date,
                 desktop: item.inStock
               }))}
               config={{
                 desktop: {
-                  label: "In Stock",
+                  label: "reports.inStock",
                   color: "hsl(var(--chart-1))",
                 },
                 label: {
-                  label: "Label",
+                  label: "reports.label",
                   color: "hsl(var(--background))",
                 },
               }}
@@ -551,8 +541,8 @@ export default function ReportsPage() {
             />
             
             <AdvancedTooltipChart
-              title="Stock Distribution"
-              description="Detailed inventory breakdown"
+              title={<TranslatedText namespace="reports" id="stockDistribution" />}
+              description={<TranslatedText namespace="reports" id="detailedInventoryBreakdown" />}
               data={inventoryData.map(item => ({
                 date: item.date,
                 running: item.inStock,
@@ -560,11 +550,11 @@ export default function ReportsPage() {
               }))}
               config={{
                 running: {
-                  label: "In Stock",
+                  label: "reports.inStock",
                   color: "hsl(var(--chart-1))",
                 },
                 swimming: {
-                  label: "Low Stock",
+                  label: "reports.lowStock",
                   color: "hsl(var(--chart-2))",
                 },
               }}
@@ -584,7 +574,7 @@ export default function ReportsPage() {
             {productData.length > 0 ? (
               <PieChartDonut
                 title={<TranslatedText namespace="reports" id="topProducts" />}
-                description="Top selling products by value"
+                description={<TranslatedText namespace="reports" id="topProductsBySalesValue" />}
                 data={productData.map((item, index) => ({
                   name: item.name,
                   value: item.value,
@@ -593,7 +583,7 @@ export default function ReportsPage() {
                 config={pieChartConfig}
                 footer={
                   <div className="font-medium leading-none">
-                    Top products by sales value
+                    <TranslatedText namespace="reports" id="topProductsBySalesValue" />
                   </div>
                 }
               />
@@ -610,15 +600,15 @@ export default function ReportsPage() {
             )}
             
             <BarChartMultiple
-              title="Product Performance"
-              description="Top products by sales value"
+              title={<TranslatedText namespace="reports" id="productPerformance" />}
+              description={<TranslatedText namespace="reports" id="topProductsBySalesValue" />}
               data={productData.map(item => ({
                 month: item.name,
                 desktop: item.value
               }))}
               config={{
                 desktop: {
-                  label: "Sales Value",
+                  label: "reports.salesValue",
                   color: "hsl(var(--chart-1))",
                 },
               }}
@@ -638,7 +628,7 @@ export default function ReportsPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <PieChartDonut
               title={<TranslatedText namespace="reports" id="topSuppliers" />}
-              description="Top suppliers by purchase value"
+              description={<TranslatedText namespace="reports" id="topSuppliersByPurchaseValue" />}
               data={supplierData.map((item, index) => ({
                 name: item.name,
                 value: item.value,
@@ -647,25 +637,25 @@ export default function ReportsPage() {
               config={pieChartConfig}
               footer={
                 <div className="font-medium leading-none">
-                  Top suppliers by purchase value
+                  <TranslatedText namespace="reports" id="topSuppliersByPurchaseValue" />
                 </div>
               }
             />
             
             <CustomLabelBarChart
-              title="Supplier Contributions"
-              description="Top suppliers by purchase value"
+              title={<TranslatedText namespace="reports" id="supplierContributions" />}
+              description={<TranslatedText namespace="reports" id="topSuppliersByPurchaseValue" />}
               data={supplierData.map(item => ({
                 month: item.name,
                 desktop: item.value
               }))}
               config={{
                 desktop: {
-                  label: "Purchase Value",
+                  label: "reports.purchaseValue",
                   color: "hsl(var(--chart-1))",
                 },
                 label: {
-                  label: "Label",
+                  label: "reports.label",
                   color: "hsl(var(--background))",
                 },
               }}
@@ -685,7 +675,7 @@ export default function ReportsPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <PieChartDonut
               title={<TranslatedText namespace="reports" id="topClients" />}
-              description="Top clients by sales value"
+              description={<TranslatedText namespace="reports" id="topClientsBySalesValue" />}
               data={clientData.map((item, index) => ({
                 name: item.name,
                 value: item.value,
@@ -694,14 +684,14 @@ export default function ReportsPage() {
               config={pieChartConfig}
               footer={
                 <div className="font-medium leading-none">
-                  Top clients by sales value
+                  <TranslatedText namespace="reports" id="topClientsBySalesValue" />
                 </div>
               }
             />
             
             <AdvancedTooltipChart
-              title="Client Activity"
-              description="Top clients by sales value"
+              title={<TranslatedText namespace="reports" id="clientActivity" />}
+              description={<TranslatedText namespace="reports" id="topClientsBySalesValue" />}
               data={clientData.map((item) => ({
                 date: item.name,
                 running: item.value,
@@ -709,11 +699,11 @@ export default function ReportsPage() {
               }))}
               config={{
                 running: {
-                  label: "Sales Value",
+                  label: "reports.salesValue",
                   color: "hsl(var(--chart-1))",
                 },
                 swimming: {
-                  label: "Hidden",
+                  label: "reports.hidden",
                   color: "hsl(var(--chart-2))",
                 },
               }}
@@ -725,7 +715,7 @@ export default function ReportsPage() {
         <TabsContent value={REPORT_TYPES.PROFIT} className="space-y-4">
           <InteractiveAreaChart
             title={<TranslatedText namespace="reports" id="profitAnalysis" />}
-            description="Revenue, cost, and profit over time"
+            description={<TranslatedText namespace="reports" id="profitAnalysisOverTime" />}
             data={profitData.map(item => ({
               date: item.date,
               revenue: item.revenue || 0,
@@ -737,8 +727,8 @@ export default function ReportsPage() {
           
           <div className="grid gap-4 md:grid-cols-2">
             <BarChartMultiple
-              title="Revenue vs Cost"
-              description="Monthly financial breakdown"
+              title={<TranslatedText namespace="reports" id="revenueVsCost" />}
+              description={<TranslatedText namespace="reports" id="monthlyFinancialBreakdown" />}
               data={profitData.map(item => ({
                 month: item.date,
                 desktop: item.revenue || 0,
@@ -746,11 +736,11 @@ export default function ReportsPage() {
               }))}
               config={{
                 desktop: {
-                  label: "Revenue",
+                  label: "reports.revenue",
                   color: "hsl(var(--chart-1))",
                 },
                 mobile: {
-                  label: "Cost",
+                  label: "reports.cost",
                   color: "hsl(var(--chart-2))",
                 },
               }}
@@ -764,8 +754,8 @@ export default function ReportsPage() {
             />
             
             <AreaChartStacked
-              title="Profit Trends"
-              description="Profit analysis over time"
+              title={<TranslatedText namespace="reports" id="profitTrends" />}
+              description={<TranslatedText namespace="reports" id="profitAnalysisOverTime" />}
               data={profitData.map(item => ({
                 month: item.date,
                 desktop: (item.profit || 0) > 0 ? (item.profit || 0) : 0,
@@ -773,11 +763,11 @@ export default function ReportsPage() {
               }))}
               config={{
                 desktop: {
-                  label: "Profit",
+                  label: "reports.profit",
                   color: "hsl(var(--chart-1))",
                 },
                 mobile: {
-                  label: "Loss",
+                  label: "reports.loss",
                   color: "hsl(var(--chart-2))",
                 },
               }}

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card"
 import { ChartConfig } from "@/components/ui/chart"
 import { CustomTooltip } from "./shared-chart-components"
+import { TranslatedText } from "@/components/language/translated-text"
 
 interface AreaChartProps {
   title: React.ReactNode
@@ -78,7 +79,26 @@ export function AreaChartStacked({
                   <CustomTooltip 
                     active={false} // This will be overridden by Recharts
                     payload={[]} // This will be overridden by Recharts
-                    indicator="dot" 
+                    indicator="dot"
+                    formatter={(value, name) => (
+                      <>
+                        <span className="text-muted-foreground">
+                          {typeof name === 'string' && name.includes('.') ? (
+                            <>
+                              <TranslatedText 
+                                namespace={name.split('.')[0]} 
+                                id={name.split('.')[1]} 
+                              />:
+                            </>
+                          ) : (
+                            `${name}:`
+                          )}
+                        </span>
+                        <span className="ml-auto font-medium text-foreground">
+                          {typeof value === 'number' ? value.toLocaleString() : value}
+                        </span>
+                      </>
+                    )}
                     labelFormatter={(value) => {
                       if (typeof value === 'string' && value.includes('-')) {
                         const date = new Date(value);
@@ -111,6 +131,16 @@ export function AreaChartStacked({
                 height={36}
                 iconType="circle"
                 iconSize={8}
+                formatter={(value) => {
+                  // Check if the value is a translation key
+                  if (typeof value === 'string' && value.includes('.')) {
+                    const [namespace, key] = value.split('.');
+                    if (namespace && key) {
+                      return <TranslatedText namespace={namespace} id={key} />;
+                    }
+                  }
+                  return value;
+                }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -141,7 +171,7 @@ export function DefaultAreaChartFooter({
   return (
     <>
       <div className="flex items-center gap-2 font-medium leading-none">
-        Trending {trendDirection} by {trendPercentage}% this month 
+        <TranslatedText namespace="reports" id={trendDirection === "up" ? "trendingUp" : "trendingDown"} /> {trendPercentage}% <TranslatedText namespace="reports" id="thisMonth" />
         {trendDirection === "up" ? <TrendingUp className="h-4 w-4" /> : <TrendingUp className="h-4 w-4 rotate-180" />}
       </div>
       <div className="flex items-center gap-2 leading-none text-muted-foreground">

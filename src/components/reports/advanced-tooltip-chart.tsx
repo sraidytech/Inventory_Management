@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card"
 import { ChartConfig } from "@/components/ui/chart"
 import { CustomTooltip } from "./shared-chart-components"
+import { TranslatedText } from "@/components/language/translated-text"
 
 interface AdvancedTooltipChartProps {
   title: React.ReactNode
@@ -84,10 +85,21 @@ export function AdvancedTooltipChart({
                     hideLabel={false}
                     formatter={(value, name) => (
                       <>
-                        <span className="text-foreground font-medium">{name}</span>
+                        <span className="text-foreground font-medium">
+                          {typeof name === 'string' && name.includes('.') ? (
+                            <TranslatedText 
+                              namespace={name.split('.')[0]} 
+                              id={name.split('.')[1]} 
+                            />
+                          ) : (
+                            name
+                          )}
+                        </span>
                         <span className="ml-auto font-mono font-medium">
                           {typeof value === 'number' ? value.toLocaleString() : value}
-                          <span className="text-muted-foreground ml-1 font-normal">units</span>
+                          <span className="text-muted-foreground ml-1 font-normal">
+                            <TranslatedText namespace="reports" id="units" />
+                          </span>
                         </span>
                       </>
                     )}
@@ -99,6 +111,16 @@ export function AdvancedTooltipChart({
                 height={36}
                 iconType="circle"
                 iconSize={8}
+                formatter={(value) => {
+                  // Check if the value is a translation key
+                  if (typeof value === 'string' && value.includes('.')) {
+                    const [namespace, key] = value.split('.');
+                    if (namespace && key) {
+                      return <TranslatedText namespace={namespace} id={key} />;
+                    }
+                  }
+                  return value;
+                }}
               />
             </BarChart>
           </ResponsiveContainer>

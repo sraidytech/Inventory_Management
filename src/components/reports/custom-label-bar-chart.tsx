@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card"
 import { ChartConfig } from "@/components/ui/chart"
 import { CustomTooltip } from "./shared-chart-components"
+import { TranslatedText } from "@/components/language/translated-text"
 
 interface CustomLabelBarChartProps {
   title: React.ReactNode
@@ -125,6 +126,16 @@ export function CustomLabelBarChart({
                 height={36}
                 iconType="circle"
                 iconSize={8}
+                formatter={(value) => {
+                  // Check if the value is a translation key
+                  if (typeof value === 'string' && value.includes('.')) {
+                    const [namespace, key] = value.split('.');
+                    if (namespace && key) {
+                      return <TranslatedText namespace={namespace} id={key} />;
+                    }
+                  }
+                  return value;
+                }}
               />
             </BarChart>
           </ResponsiveContainer>
@@ -151,11 +162,11 @@ export function DefaultCustomLabelBarChartFooter({
   return (
     <>
       <div className="flex gap-2 font-medium leading-none">
-        Trending {trendDirection} by {trendPercentage}% this month 
+        <TranslatedText namespace="reports" id={trendDirection === "up" ? "trendingUp" : "trendingDown"} /> {trendPercentage}% <TranslatedText namespace="reports" id="thisMonth" />
         {trendDirection === "up" ? <TrendingUp className="h-4 w-4" /> : <TrendingUp className="h-4 w-4 rotate-180" />}
       </div>
       <div className="leading-none text-muted-foreground">
-        Showing total visitors for {dateRange}
+        <TranslatedText namespace="reports" id="showingTotalVisitors" /> {dateRange}
       </div>
     </>
   )

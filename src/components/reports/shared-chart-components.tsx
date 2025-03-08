@@ -2,6 +2,7 @@
 
 import { TooltipProps } from "recharts";
 import { cn } from "@/lib/utils";
+import { TranslatedText } from "@/components/language/translated-text";
 
 // Custom tooltip component for better styling
 export const CustomTooltip = ({ 
@@ -73,7 +74,16 @@ export const CustomTooltip = ({
                   />
                 )}
                 <span className="text-muted-foreground">
-                  {item.name}:
+                  {typeof item.name === 'string' && item.name.includes('.') ? (
+                    <>
+                      <TranslatedText 
+                        namespace={item.name.split('.')[0]} 
+                        id={item.name.split('.')[1]} 
+                      />:
+                    </>
+                  ) : (
+                    `${item.name}:`
+                  )}
                 </span>
                 <span className="font-medium text-foreground">
                   {valuePrefix}
@@ -95,7 +105,9 @@ export const CustomTooltip = ({
         {/* Show total if all values are numbers */}
         {allNumbers && total !== null && payload.length > 1 && (
           <div className="mt-1 pt-1 border-t border-border flex items-center justify-between text-xs">
-            <span className="font-medium">Total:</span>
+            <span className="font-medium">
+              <TranslatedText namespace="common" id="total" />:
+            </span>
             <span className="font-medium">
               {valuePrefix}{total.toLocaleString()}{valueSuffix}
             </span>

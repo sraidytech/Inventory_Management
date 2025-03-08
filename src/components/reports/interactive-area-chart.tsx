@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { TranslatedText } from "@/components/language/translated-text"
 
 interface InteractiveAreaChartProps {
   title: React.ReactNode
@@ -79,13 +80,13 @@ export function InteractiveAreaChart({
           </SelectTrigger>
           <SelectContent className="rounded-xl">
             <SelectItem value="90d" className="rounded-lg">
-              Last 3 months
+              <TranslatedText namespace="reports" id="lastThreeMonths" />
             </SelectItem>
             <SelectItem value="30d" className="rounded-lg">
-              Last 30 days
+              <TranslatedText namespace="reports" id="lastThirtyDays" />
             </SelectItem>
             <SelectItem value="7d" className="rounded-lg">
-              Last 7 days
+              <TranslatedText namespace="reports" id="lastSevenDays" />
             </SelectItem>
           </SelectContent>
         </Select>
@@ -135,6 +136,25 @@ export function InteractiveAreaChart({
                     active={false} // This will be overridden by Recharts
                     payload={[]} // This will be overridden by Recharts
                     indicator="dot"
+                    formatter={(value, name) => (
+                      <>
+                        <span className="text-muted-foreground">
+                          {typeof name === 'string' && name.includes('.') ? (
+                            <>
+                              <TranslatedText 
+                                namespace={name.split('.')[0]} 
+                                id={name.split('.')[1]} 
+                              />:
+                            </>
+                          ) : (
+                            `${name}:`
+                          )}
+                        </span>
+                        <span className="ml-auto font-medium text-foreground">
+                          {typeof value === 'number' ? value.toLocaleString() : value}
+                        </span>
+                      </>
+                    )}
                     labelFormatter={(value) => {
                       if (typeof value === 'string' && value.includes('-')) {
                         const date = new Date(value);
@@ -166,6 +186,16 @@ export function InteractiveAreaChart({
                 height={36}
                 iconType="circle"
                 iconSize={8}
+                formatter={(value) => {
+                  // Check if the value is a translation key
+                  if (typeof value === 'string' && value.includes('.')) {
+                    const [namespace, key] = value.split('.');
+                    if (namespace && key) {
+                      return <TranslatedText namespace={namespace} id={key} />;
+                    }
+                  }
+                  return value;
+                }}
               />
             </AreaChart>
           </ResponsiveContainer>
