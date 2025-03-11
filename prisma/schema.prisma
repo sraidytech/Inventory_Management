@@ -1,3 +1,4 @@
+
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -14,6 +15,12 @@ enum TransactionType {
   PURCHASE
   SALE
   ADJUSTMENT
+}
+
+enum ExpenseStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
 }
 
 enum TransactionStatus {
@@ -179,6 +186,33 @@ model Notification {
   link      String?
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
+}
+
+model ExpenseCategory {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  expenses    Expense[]
+  userId      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([name, userId])
+}
+
+model Expense {
+  id              String        @id @default(uuid())
+  amount          Float
+  description     String
+  status          ExpenseStatus @default(COMPLETED)
+  paymentMethod   PaymentMethod
+  reference       String?       // For check number or bank transfer reference
+  notes           String?
+  category        ExpenseCategory @relation(fields: [categoryId], references: [id])
+  categoryId      String
+  userId          String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
 
 model UserSettings {

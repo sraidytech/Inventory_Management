@@ -1,5 +1,37 @@
 import { z } from "zod";
 
+export const expenseCategorySchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+  userId: z.string().min(1, "User ID is required"),
+});
+
+export const expenseCategoryFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+});
+
+export const expenseSchema = z.object({
+  amount: z.number().min(0.01, "Amount must be greater than zero"),
+  description: z.string().min(1, "Description is required"),
+  status: z.enum(["PENDING", "COMPLETED", "CANCELLED"]).default("COMPLETED"),
+  paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK"]),
+  reference: z.string().optional(),
+  notes: z.string().optional(),
+  categoryId: z.string().min(1, "Category is required"),
+  userId: z.string().min(1, "User ID is required"),
+});
+
+export const expenseFormSchema = z.object({
+  amount: z.number().min(0.01, "Amount must be greater than zero"),
+  description: z.string().min(1, "Description is required"),
+  status: z.enum(["PENDING", "COMPLETED", "CANCELLED"]).default("COMPLETED"),
+  paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK"]),
+  reference: z.string().optional(),
+  notes: z.string().optional(),
+  categoryId: z.string().min(1, "Category is required"),
+});
+
 export const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
@@ -128,6 +160,8 @@ export const userSettingsFormSchema = z.object({
   notifications: z.boolean().default(true),
 });
 
+export type ExpenseCategoryInput = z.infer<typeof expenseCategorySchema>;
+export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type ProductInput = z.infer<typeof productSchema>;
 export type CategoryInput = z.infer<typeof categorySchema>;
 export type SupplierInput = z.infer<typeof supplierSchema>;

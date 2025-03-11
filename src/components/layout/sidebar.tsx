@@ -27,7 +27,8 @@ import {
   Tags,
   UserCircle,
   DollarSign,
-  BarChart
+  BarChart,
+  Receipt
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -67,6 +68,12 @@ const routes: RouteItem[] = [
     icon: UserCircle,
     href: "/clients",
     color: "text-blue-500"
+  },
+  {
+    label: "Expenses",
+    icon: Receipt,
+    href: "/expenses",
+    color: "text-red-500"
   },
   {
     label: "Transactions",
