@@ -14,7 +14,7 @@
     "search": "بحث",
     "filter": "تصفية",
     "export": "تصدير",
-    "applyFilters": "تطبيق الفلاتر",
+    "applyFilters": "تطبيق التصفية",
     "detailedReports": "تقارير مفصلة",
     "actions": "إجراءات",
     "status": "الحالة",
@@ -73,11 +73,12 @@
     "next": "التالي",
     "previousPage": "الصفحة السابقة",
     "nextPage": "الصفحة التالية",
-    "resetFilters": "إعادة تعيين جميع الفلاتر",
+    "resetFilters": "إعادة تعيين التصفية",
     "product": "المنتج",
     "supplier": "المورد",
     "client": "العميل",
-    "reset": "إعادة تعيين"
+    "reset": "إعادة تعيين",
+    "today": "اليوم"
   },
   "inventory": {
     "title": "المخزون",

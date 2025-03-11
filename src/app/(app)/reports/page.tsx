@@ -26,6 +26,7 @@ const REPORT_TYPES = {
   SUPPLIERS: "suppliers",
   CLIENTS: "clients",
   PROFIT: "profit",
+  EXPENSES: "expenses",
 };
 
 // Chart configurations with translation keys
@@ -64,9 +65,20 @@ const profitChartConfig = {
     label: "reports.cost",
     color: "hsl(var(--chart-2))",
   },
+  expenses: {
+    label: "reports.expenses",
+    color: "hsl(var(--chart-4))",
+  },
   profit: {
     label: "reports.profit",
     color: "hsl(var(--chart-3))",
+  },
+};
+
+const expensesChartConfig = {
+  expenses: {
+    label: "reports.expenses",
+    color: "hsl(var(--chart-1))",
   },
 };
 
@@ -155,7 +167,13 @@ export default function ReportsPage() {
     date: string;
     revenue: number;
     cost: number;
+    expenses: number;
     profit: number;
+  }
+
+  interface ExpenseDataPoint {
+    date: string;
+    expenses: number;
   }
 
   interface FilterItem {
@@ -170,6 +188,10 @@ export default function ReportsPage() {
   const [supplierData, setSupplierData] = useState<PieChartDataPoint[]>([]);
   const [clientData, setClientData] = useState<PieChartDataPoint[]>([]);
   const [profitData, setProfitData] = useState<ProfitDataPoint[]>([]);
+  const [expenseData, setExpenseData] = useState<ExpenseDataPoint[]>([]);
+  const [expenseCategoryData, setExpenseCategoryData] = useState<PieChartDataPoint[]>([]);
+  const [expensePaymentMethodData, setExpensePaymentMethodData] = useState<PieChartDataPoint[]>([]);
+  const [totalExpenses, setTotalExpenses] = useState<number>(0);
   
   // These filter lists are not used in the UI since we removed the filter section
   // But we keep the state for future implementation
@@ -254,29 +276,35 @@ export default function ReportsPage() {
       // Get the data from the response
       const filteredData = data;
       
-      // Update state based on tab type
-      switch (tabType) {
-        case REPORT_TYPES.SALES:
-          console.log("Setting sales data:", filteredData.data.timeSeriesData || []);
-          setSalesData(filteredData.data.timeSeriesData || []);
-          setProfitData(filteredData.data.timeSeriesData || []); // Profit data comes from the same endpoint
-          break;
-        case REPORT_TYPES.INVENTORY:
-          setInventoryData(filteredData.data.timeSeriesData || []);
-          break;
-        case REPORT_TYPES.PRODUCTS:
-          setProductData(filteredData.data.productData || []);
-          break;
-        case REPORT_TYPES.SUPPLIERS:
-          setSupplierData(filteredData.data.supplierData || []);
-          break;
-        case REPORT_TYPES.CLIENTS:
-          setClientData(filteredData.data.clientData || []);
-          break;
-        case REPORT_TYPES.PROFIT:
-          // Profit data is already fetched with sales data
-          break;
-      }
+          // Update state based on tab type
+          switch (tabType) {
+            case REPORT_TYPES.SALES:
+              console.log("Setting sales data:", filteredData.data.timeSeriesData || []);
+              setSalesData(filteredData.data.timeSeriesData || []);
+              setProfitData(filteredData.data.timeSeriesData || []); // Profit data comes from the same endpoint
+              break;
+            case REPORT_TYPES.INVENTORY:
+              setInventoryData(filteredData.data.timeSeriesData || []);
+              break;
+            case REPORT_TYPES.PRODUCTS:
+              setProductData(filteredData.data.productData || []);
+              break;
+            case REPORT_TYPES.SUPPLIERS:
+              setSupplierData(filteredData.data.supplierData || []);
+              break;
+            case REPORT_TYPES.CLIENTS:
+              setClientData(filteredData.data.clientData || []);
+              break;
+            case REPORT_TYPES.PROFIT:
+              // Profit data is already fetched with sales data
+              break;
+            case REPORT_TYPES.EXPENSES:
+              setExpenseData(filteredData.data.timeSeriesData || []);
+              setExpenseCategoryData(filteredData.data.expenseCategoryData || []);
+              setExpensePaymentMethodData(filteredData.data.expensePaymentMethodData || []);
+              setTotalExpenses(filteredData.data.totalExpenses || 0);
+              break;
+          }
     } catch (err) {
       console.error(`Error fetching ${tabType} data:`, err);
       // Don't set error state here to avoid blocking the UI
@@ -286,14 +314,14 @@ export default function ReportsPage() {
 
   // Initialize with sample data for testing
   useEffect(() => {
-    // Sample sales data
-    const sampleSalesData = [
-      { date: "2024-03-01", sales: 5000, transactions: 20, revenue: 5000, cost: 3000, profit: 2000 },
-      { date: "2024-03-02", sales: 6000, transactions: 25, revenue: 6000, cost: 3500, profit: 2500 },
-      { date: "2024-03-03", sales: 4500, transactions: 18, revenue: 4500, cost: 2800, profit: 1700 },
-      { date: "2024-03-04", sales: 7000, transactions: 30, revenue: 7000, cost: 4000, profit: 3000 },
-      { date: "2024-03-05", sales: 5500, transactions: 22, revenue: 5500, cost: 3200, profit: 2300 },
-    ];
+      // Sample sales data
+      const sampleSalesData = [
+        { date: "2024-03-01", sales: 5000, transactions: 20, revenue: 5000, cost: 3000, profit: 2000, expenses: 500 },
+        { date: "2024-03-02", sales: 6000, transactions: 25, revenue: 6000, cost: 3500, profit: 2500, expenses: 600 },
+        { date: "2024-03-03", sales: 4500, transactions: 18, revenue: 4500, cost: 2800, profit: 1700, expenses: 450 },
+        { date: "2024-03-04", sales: 7000, transactions: 30, revenue: 7000, cost: 4000, profit: 3000, expenses: 700 },
+        { date: "2024-03-05", sales: 5500, transactions: 22, revenue: 5500, cost: 3200, profit: 2300, expenses: 550 },
+      ];
     
     // Sample inventory data
     const sampleInventoryData = [
@@ -322,22 +350,48 @@ export default function ReportsPage() {
       { name: "Supplier E", value: 100 },
     ];
     
-    // Sample client data
-    const sampleClientData = [
-      { name: "Client A", value: 400 },
-      { name: "Client B", value: 300 },
-      { name: "Client C", value: 300 },
-      { name: "Client D", value: 200 },
-      { name: "Client E", value: 100 },
-    ];
+      // Sample client data
+      const sampleClientData = [
+        { name: "Client A", value: 400 },
+        { name: "Client B", value: 300 },
+        { name: "Client C", value: 300 },
+        { name: "Client D", value: 200 },
+        { name: "Client E", value: 100 },
+      ];
+      
+      // Sample expense data
+      const sampleExpenseData = sampleSalesData.map(item => ({
+        date: item.date,
+        expenses: item.expenses
+      }));
+      
+      // Sample expense category data
+      const sampleExpenseCategoryData = [
+        { name: "Office Supplies", value: 1200 },
+        { name: "Rent", value: 2000 },
+        { name: "Utilities", value: 800 },
+        { name: "Salaries", value: 5000 },
+        { name: "Marketing", value: 1500 },
+      ];
+      
+      // Sample expense payment method data
+      const sampleExpensePaymentMethodData = [
+        { name: "CASH", value: 3000 },
+        { name: "BANK_TRANSFER", value: 6000 },
+        { name: "CHECK", value: 1500 },
+      ];
     
-    // Set sample data
-    setSalesData(sampleSalesData);
-    setInventoryData(sampleInventoryData);
-    setProductData(sampleProductData);
-    setSupplierData(sampleSupplierData);
-    setClientData(sampleClientData);
-    setProfitData(sampleSalesData);
+      // Set sample data
+      setSalesData(sampleSalesData);
+      setInventoryData(sampleInventoryData);
+      setProductData(sampleProductData);
+      setSupplierData(sampleSupplierData);
+      setClientData(sampleClientData);
+      setProfitData(sampleSalesData);
+      setExpenseData(sampleExpenseData);
+      setExpenseCategoryData(sampleExpenseCategoryData);
+      setExpensePaymentMethodData(sampleExpensePaymentMethodData);
+      setTotalExpenses(10500);
     
     // Set loading to false
     setIsLoading(false);
@@ -421,7 +475,7 @@ export default function ReportsPage() {
 
       {/* Report Tabs */}
       <Tabs defaultValue={REPORT_TYPES.SALES} value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid grid-cols-3 md:grid-cols-6 mb-4">
+        <TabsList className="grid grid-cols-4 md:grid-cols-7 mb-4">
           <TabsTrigger value={REPORT_TYPES.SALES}>
             <TranslatedText namespace="reports" id="salesReport" />
           </TabsTrigger>
@@ -436,6 +490,9 @@ export default function ReportsPage() {
           </TabsTrigger>
           <TabsTrigger value={REPORT_TYPES.CLIENTS}>
             <TranslatedText namespace="reports" id="clientsReport" />
+          </TabsTrigger>
+          <TabsTrigger value={REPORT_TYPES.EXPENSES}>
+            <TranslatedText namespace="common" id="expenses" />
           </TabsTrigger>
           <TabsTrigger value={REPORT_TYPES.PROFIT}>
             <TranslatedText namespace="reports" id="profitReport" />
@@ -711,6 +768,111 @@ export default function ReportsPage() {
           </div>
         </TabsContent>
         
+        {/* Expenses Report */}
+        <TabsContent value={REPORT_TYPES.EXPENSES} className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="shadow-md border-0">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl font-semibold">
+                  <TranslatedText namespace="common" id="expenses" />
+                </CardTitle>
+                <CardDescription>
+                  <TranslatedText namespace="expenses" id="description" />
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold mb-4">
+                  DH {totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <AreaChartStacked
+                  title={<TranslatedText namespace="common" id="expenses" />}
+                  description={<TranslatedText namespace="expenses" id="description" />}
+                  data={expenseData.map(item => ({
+                    month: item.date,
+                    expenses: item.expenses
+                  }))}
+                  config={expensesChartConfig}
+                  footer={
+                    <DefaultAreaChartFooter 
+                      trendPercentage={2.5} 
+                      trendDirection="up"
+                      dateRange={`${startDate} - ${endDate}`}
+                    />
+                  }
+                />
+              </CardContent>
+            </Card>
+            
+            <PieChartDonut
+              title={<TranslatedText namespace="expenses" id="categories.title" />}
+              description={<TranslatedText namespace="expenses" id="categories.subtitle" />}
+              data={expenseCategoryData.map((item, index) => ({
+                name: item.name,
+                value: item.value,
+                fill: COLORS[index % COLORS.length]
+              }))}
+              config={pieChartConfig}
+              footer={
+                <div className="font-medium leading-none">
+                  <TranslatedText namespace="expenses" id="categories.title" />
+                </div>
+              }
+            />
+          </div>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            <BarChartMultiple
+              title={<TranslatedText namespace="transactions" id="paymentMethod" />}
+              description={<TranslatedText namespace="expenses" id="description" />}
+              data={expensePaymentMethodData.map(item => ({
+                month: item.name === "CASH" ? "Cash" : 
+                       item.name === "BANK_TRANSFER" ? "Bank Transfer" : 
+                       item.name === "CHECK" ? "Check" : item.name,
+                desktop: item.value
+              }))}
+              config={{
+                desktop: {
+                  label: "reports.expenses",
+                  color: "hsl(var(--chart-1))",
+                },
+              }}
+              footer={
+                <DefaultBarChartFooter 
+                  trendPercentage={1.8} 
+                  trendDirection="up"
+                  dateRange={`${startDate} - ${endDate}`}
+                />
+              }
+            />
+            
+            <CustomLabelBarChart
+              title={<TranslatedText namespace="expenses" id="title" />}
+              description={<TranslatedText namespace="expenses" id="description" />}
+              data={expenseData.map(item => ({
+                month: item.date,
+                desktop: item.expenses
+              }))}
+              config={{
+                desktop: {
+                  label: "reports.expenses",
+                  color: "hsl(var(--chart-1))",
+                },
+                label: {
+                  label: "reports.label",
+                  color: "hsl(var(--background))",
+                },
+              }}
+              footer={
+                <DefaultCustomLabelBarChartFooter 
+                  trendPercentage={2.3} 
+                  trendDirection="up"
+                  dateRange={`${startDate} - ${endDate}`}
+                />
+              }
+            />
+          </div>
+        </TabsContent>
+        
         {/* Profit Report */}
         <TabsContent value={REPORT_TYPES.PROFIT} className="space-y-4">
           <InteractiveAreaChart
@@ -720,7 +882,8 @@ export default function ReportsPage() {
               date: item.date,
               revenue: item.revenue || 0,
               cost: item.cost || 0,
-              profit: item.profit || 0
+              expenses: item.expenses || 0,
+              profit: (item.revenue || 0) - (item.cost || 0) - (item.expenses || 0)
             }))}
             config={profitChartConfig}
           />
@@ -732,7 +895,8 @@ export default function ReportsPage() {
               data={profitData.map(item => ({
                 month: item.date,
                 desktop: item.revenue || 0,
-                mobile: item.cost || 0
+                mobile: item.cost || 0,
+                tablet: item.expenses || 0
               }))}
               config={{
                 desktop: {
@@ -742,6 +906,10 @@ export default function ReportsPage() {
                 mobile: {
                   label: "reports.cost",
                   color: "hsl(var(--chart-2))",
+                },
+                tablet: {
+                  label: "reports.expenses",
+                  color: "hsl(var(--chart-4))",
                 },
               }}
               footer={
@@ -756,11 +924,14 @@ export default function ReportsPage() {
             <AreaChartStacked
               title={<TranslatedText namespace="reports" id="profitTrends" />}
               description={<TranslatedText namespace="reports" id="profitAnalysisOverTime" />}
-              data={profitData.map(item => ({
-                month: item.date,
-                desktop: (item.profit || 0) > 0 ? (item.profit || 0) : 0,
-                mobile: (item.profit || 0) < 0 ? Math.abs(item.profit || 0) : 0
-              }))}
+              data={profitData.map(item => {
+                const calculatedProfit = (item.revenue || 0) - (item.cost || 0) - (item.expenses || 0);
+                return {
+                  month: item.date,
+                  desktop: calculatedProfit > 0 ? calculatedProfit : 0,
+                  mobile: calculatedProfit < 0 ? Math.abs(calculatedProfit) : 0
+                };
+              })}
               config={{
                 desktop: {
                   label: "reports.profit",

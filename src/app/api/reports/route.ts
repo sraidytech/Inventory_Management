@@ -32,10 +32,97 @@ export async function GET(request: Request) {
 
     // Generate all dates in the range for consistent data
     const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
-    const dateMap = new Map(dateRange.map(date => [format(date, 'yyyy-MM-dd'), { date: format(date, 'yyyy-MM-dd'), sales: 0, transactions: 0, inStock: 0, lowStock: 0, outOfStock: 0, revenue: 0, cost: 0, profit: 0 }]));
+    const dateMap = new Map(dateRange.map(date => [format(date, 'yyyy-MM-dd'), { 
+      date: format(date, 'yyyy-MM-dd'), 
+      sales: 0, 
+      transactions: 0, 
+      inStock: 0, 
+      lowStock: 0, 
+      outOfStock: 0, 
+      revenue: 0, 
+      cost: 0, 
+      profit: 0,
+      expenses: 0 
+    }]));
 
     // Fetch data based on report type
     switch (reportType) {
+      case "expenses": {
+        // Get all expenses in the date range
+        const expenses = await prisma.expense.findMany({
+          where: {
+            createdAt: {
+              gte: startDate,
+              lt: endDatePlusOne,
+            },
+            userId: session.userId,
+            status: "COMPLETED",
+          },
+          include: {
+            category: true,
+          },
+        });
+
+        // Process expenses into daily data
+        expenses.forEach(expense => {
+          const dateKey = format(expense.createdAt, 'yyyy-MM-dd');
+          const dayData = dateMap.get(dateKey);
+          
+          if (dayData) {
+            dayData.expenses += expense.amount;
+          }
+        });
+
+        // Get top expense categories
+        const expensesByCategory = expenses.reduce((acc, expense) => {
+          const categoryId = expense.categoryId;
+          const categoryName = expense.category.name;
+          
+          if (!acc[categoryId]) {
+            acc[categoryId] = {
+              name: categoryName,
+              value: 0,
+            };
+          }
+          
+          acc[categoryId].value += expense.amount;
+          return acc;
+        }, {} as Record<string, { name: string, value: number }>);
+        
+        // Convert to array and sort by value
+        const topExpenseCategories = Object.values(expensesByCategory)
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 5);
+
+        // Get expenses by payment method
+        const expensesByPaymentMethod = expenses.reduce((acc, expense) => {
+          const paymentMethod = expense.paymentMethod;
+          
+          if (!acc[paymentMethod]) {
+            acc[paymentMethod] = {
+              name: paymentMethod,
+              value: 0,
+            };
+          }
+          
+          acc[paymentMethod].value += expense.amount;
+          return acc;
+        }, {} as Record<string, { name: string, value: number }>);
+        
+        // Convert to array
+        const expensePaymentMethods = Object.values(expensesByPaymentMethod)
+          .sort((a, b) => b.value - a.value);
+
+        return NextResponse.json({
+          success: true,
+          data: {
+            timeSeriesData: Array.from(dateMap.values()),
+            expenseCategoryData: topExpenseCategories,
+            expensePaymentMethodData: expensePaymentMethods,
+            totalExpenses: expenses.reduce((sum, expense) => sum + expense.amount, 0),
+          }
+        });
+      }
       case "sales": {
         // Get all transactions in the date range
         const transactions = await prisma.transaction.findMany({
@@ -349,7 +436,30 @@ export async function GET(request: Request) {
       }
       
       case "profit": {
-        // This is handled in the sales case, as we calculate profit there
+        // Get all expenses in the date range
+        const expenses = await prisma.expense.findMany({
+          where: {
+            createdAt: {
+              gte: startDate,
+              lt: endDatePlusOne,
+            },
+            userId: session.userId,
+            status: "COMPLETED",
+          },
+        });
+
+        // Process expenses into daily data
+        expenses.forEach(expense => {
+          const dateKey = format(expense.createdAt, 'yyyy-MM-dd');
+          const dayData = dateMap.get(dateKey);
+          
+          if (dayData) {
+            dayData.expenses += expense.amount;
+            // Update profit calculation to include expenses
+            dayData.profit = dayData.revenue - dayData.cost - dayData.expenses;
+          }
+        });
+        
         break;
       }
       

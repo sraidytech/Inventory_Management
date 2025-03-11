@@ -24,6 +24,7 @@ import {
   ArchiveIcon,
   CreditCardIcon,
   PercentIcon,
+  ReceiptIcon,
 } from "lucide-react";
 
 interface DashboardStats {
@@ -48,6 +49,10 @@ interface DashboardStats {
   // Client data
   clientsWithBalance: number;
   totalClientBalance: number;
+  
+  // Expense data
+  totalExpenses: number;
+  expensesToday: number;
   
   // Transactions
   recentTransactions: {
@@ -174,6 +179,10 @@ export default function DashboardPage() {
         clientsWithBalance: statsData.data.clientsWithBalance ?? 0,
         totalClientBalance: statsData.data.totalClientBalance ?? 0,
         
+        // Expense data
+        expensesToday: statsData.data.expensesToday ?? 0,
+        totalExpenses: statsData.data.totalExpenses ?? 0,
+        
         // Transactions
         recentTransactions: Array.isArray(statsData.data.recentTransactions) 
           ? statsData.data.recentTransactions 
@@ -281,6 +290,7 @@ export default function DashboardPage() {
   const productsTrend = { value: 0, label: "vs last week" }; // No historical data for products
   const salesTrend = calculateTrend(stats.totalSales, stats.totalSales * 0.9); // Approximation
   const profitTrend = calculateTrend(stats.profit, stats.profit * 0.92); // Approximation
+  const expensesTrend = calculateTrend(stats.totalExpenses, stats.totalExpenses * 0.95); // Approximation
 
   interface Transaction {
     id: string;
@@ -341,6 +351,12 @@ export default function DashboardPage() {
   const salesSparklineData = generateTransactionSparklineData(stats.recentTransactions, 'SALE');
   const purchasesSparklineData = generateTransactionSparklineData(stats.recentTransactions, 'PURCHASE');
   const profitSparklineData = generateProfitSparklineData(salesSparklineData, purchasesSparklineData);
+  
+  // Generate dummy expense sparkline data (since we don't have real data yet)
+  const expensesSparklineData = salesSparklineData.map((point) => ({
+    date: point.date,
+    value: stats.totalExpenses / 7 * (0.8 + Math.random() * 0.4) // Distribute total expenses across days with some randomness
+  }));
 
   return (
     <div className="p-6 space-y-6">
@@ -402,7 +418,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Financial Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <EnhancedStatCard
           title={<TranslatedText namespace="dashboard.stats" id="totalSales" />}
           value={`DH ${(stats.totalSales ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
@@ -423,6 +439,16 @@ export default function DashboardPage() {
           className="lg:col-span-1"
         />
         <EnhancedStatCard
+          title={<TranslatedText namespace="common" id="expenses" />}
+          value={`DH ${(stats.totalExpenses ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          icon={<ReceiptIcon className="text-red-500" />}
+          trend={expensesTrend}
+          sparklineData={expensesSparklineData}
+          chartColor="#ef4444" // red
+          valuePrefix="DH"
+          className="lg:col-span-1"
+        />
+        <EnhancedStatCard
           title={<TranslatedText namespace="dashboard.stats" id="totalProfit" />}
           value={`DH ${(stats.profit ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={<PercentIcon className="text-violet-500" />}
@@ -434,7 +460,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Profit Stats */}
+      {/* Additional Financial Stats */}
       <div className="grid gap-4 md:grid-cols-3">
         <EnhancedStatCard
           title={<TranslatedText namespace="payments" id="title" />}
@@ -547,6 +573,55 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Expenses Section */}
+      <Card className="shadow-md border-0">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-xl font-semibold">
+              <TranslatedText namespace="common" id="expenses" />
+            </CardTitle>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-sm"
+              onClick={() => window.location.href = '/expenses'}
+            >
+              <TranslatedText namespace="common" id="expenses" />
+              <ArrowRight className={`${isRTL ? 'mr-1' : 'ml-1'} h-4 w-4`} />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">
+                <TranslatedText namespace="common" id="total" />
+              </div>
+              <div className="text-2xl font-bold">
+                DH {(stats.totalExpenses ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                <TranslatedText namespace="common" id="today" />: DH {(stats.expensesToday ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+            </div>
+            <div className="flex items-center justify-end">
+              <Button 
+                onClick={() => window.location.href = '/reports?tab=expenses'}
+                variant="outline"
+                className="mr-2"
+              >
+                <TranslatedText namespace="common" id="detailedReports" />
+              </Button>
+              <Button 
+                onClick={() => window.location.href = '/expenses/new'}
+              >
+                <TranslatedText namespace="expenses" id="addExpense" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

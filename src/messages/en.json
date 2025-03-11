@@ -77,7 +77,8 @@
     "product": "Product",
     "supplier": "Supplier",
     "client": "Client",
-    "reset": "Reset"
+    "reset": "Reset",
+    "today": "Today"
   },
   "inventory": {
     "title": "Inventory",

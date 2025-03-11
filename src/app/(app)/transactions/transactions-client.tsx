@@ -222,6 +222,10 @@ export function TransactionsClient() {
     }
   };
 
+  const getRemainingAmountColor = (amount: number) => {
+    return amount > 0 ? "text-red-600 dark:text-red-400 font-medium" : "";
+  };
+
   if (isLoading) {
     return <TransactionsTableSkeleton />;
   }
@@ -371,6 +375,7 @@ export function TransactionsClient() {
                   <th className="px-6 py-3"><TranslatedText namespace="transactions" id="party" /></th>
                   <th className="px-6 py-3"><TranslatedText namespace="transactions" id="items" /></th>
                   <th className="px-6 py-3"><TranslatedText namespace="common" id="total" /></th>
+                  <th className="px-6 py-3"><TranslatedText namespace="transactions" id="remainingAmount" /></th>
                   <th className="px-6 py-3"><TranslatedText namespace="common" id="status" /></th>
                   <th className="px-6 py-3"><TranslatedText namespace="common" id="actions" /></th>
                 </tr>
@@ -378,7 +383,7 @@ export function TransactionsClient() {
               <tbody>
                 {filteredTransactions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
+                    <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
                       <TranslatedText namespace="transactions" id="noTransactionsFound" />
                     </td>
                   </tr>
@@ -413,6 +418,9 @@ export function TransactionsClient() {
                       <td className="px-6 py-4">{transaction.items.length}</td>
                       <td className="px-6 py-4 font-medium">
                         DH {transaction.total.toFixed(2)}
+                      </td>
+                      <td className={`px-6 py-4 font-medium ${getRemainingAmountColor(transaction.remainingAmount)}`}>
+                        DH {transaction.remainingAmount.toFixed(2)}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>

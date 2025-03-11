@@ -38,7 +38,10 @@ export async function GET(request: Request) {
       todayTransactions,
       allTransactions,
       allPayments,
-      clients
+      clients,
+      // Add expenses queries
+      todayExpenses,
+      allExpenses
     ] = await Promise.all([
       // Total products count
       prisma.product.count({
@@ -165,6 +168,35 @@ export async function GET(request: Request) {
           amountPaid: true,
           balance: true,
         }
+      }),
+      
+      // Today's expenses
+      prisma.expense.findMany({
+        where: {
+          createdAt: {
+            gte: today,
+          },
+          status: "COMPLETED",
+          userId: session.userId
+        },
+        select: {
+          amount: true,
+        },
+      }),
+      
+      // All expenses within date range
+      prisma.expense.findMany({
+        where: {
+          createdAt: {
+            gte: startDate,
+            lt: endDatePlusOne,
+          },
+          status: "COMPLETED",
+          userId: session.userId
+        },
+        select: {
+          amount: true,
+        },
       })
     ]);
 
@@ -202,8 +234,12 @@ export async function GET(request: Request) {
       .filter((p) => p.transaction?.type === "PURCHASE" && p.status === "COMPLETED")
       .reduce((sum, p) => sum + p.amount, 0);
       
-    // Calculate profit (simple calculation: sales - purchases)
-    const profit = totalSales - totalPurchases;
+    // Calculate expenses
+    const expensesToday = todayExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalExpenses = allExpenses.reduce((sum, e) => sum + e.amount, 0);
+      
+    // Calculate profit (sales - purchases - expenses)
+    const profit = totalSales - totalPurchases - totalExpenses;
 
     return NextResponse.json({
       success: true,
@@ -233,6 +269,10 @@ export async function GET(request: Request) {
         // Client data
         clientsWithBalance: clients.length,
         totalClientBalance: clients.reduce((sum, c) => sum + c.balance, 0),
+        
+        // Expense data
+        expensesToday,
+        totalExpenses,
         
         // Date range
         startDate: startDate.toISOString(),
