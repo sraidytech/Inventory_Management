@@ -39,15 +39,56 @@ export function NotificationDropdown() {
         headers: {
           "Content-Type": "application/json",
         },
+        // Add cache: 'no-store' to prevent caching
+        cache: 'no-store',
       });
 
       const data = await response.json();
+      console.log("Fetched notifications:", data);
       
-      if (data.success && data.data && Array.isArray(data.data.items)) {
-        setNotifications(data.data.items);
-        setUnreadCount(data.data.items.length);
+      console.log("Raw data:", JSON.stringify(data));
+      
+      if (data.success) {
+        // The API middleware wraps the response in another data property
+        // So we need to check if data.data.data exists (double nested)
+        if (data.data && data.data.success && data.data.data) {
+          console.log("Double nested data structure detected");
+          
+          // Handle double nested structure (from middleware)
+          const nestedData = data.data.data;
+          
+          if (Array.isArray(nestedData)) {
+            console.log("Nested data is an array, length:", nestedData.length);
+            setNotifications(nestedData);
+            setUnreadCount(nestedData.length);
+          } else if (nestedData.items && Array.isArray(nestedData.items)) {
+            console.log("Nested data has items array, length:", nestedData.items.length);
+            setNotifications(nestedData.items);
+            setUnreadCount(nestedData.items.length);
+          } else {
+            console.log("No notifications found in nested data");
+            setNotifications([]);
+            setUnreadCount(0);
+          }
+        } 
+        // Handle single nested structure (direct from API)
+        else if (Array.isArray(data.data)) {
+          console.log("Data is an array, length:", data.data.length);
+          setNotifications(data.data);
+          setUnreadCount(data.data.length);
+        } else if (data.data && data.data.items && Array.isArray(data.data.items)) {
+          console.log("Data has items array, length:", data.data.items.length);
+          setNotifications(data.data.items);
+          setUnreadCount(data.data.items.length);
+        } else {
+          // Handle case when items array is not available
+          console.log("No notifications found or invalid data format");
+          console.log("Data structure:", typeof data.data, data.data ? Object.keys(data.data) : "null");
+          setNotifications([]);
+          setUnreadCount(0);
+        }
       } else {
-        // Handle case when items array is not available
+        console.log("API request failed:", data.error || "Unknown error");
         setNotifications([]);
         setUnreadCount(0);
       }

@@ -4,6 +4,7 @@
   "description": "Scripts for the Inventory Management System",
   "type": "module",
   "scripts": {
-    "check-payments": "node check-payment-due-dates.js"
+    "check-payments": "node check-payment-due-dates.js",
+    "check-stock": "node check-stock-levels.js"
   }
 }
