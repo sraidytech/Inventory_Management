@@ -100,6 +100,7 @@ export const transactionSchema = z.object({
   paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK"]).optional(),
   reference: z.string().optional(),
   notes: z.string().optional(),
+  paymentDueDate: z.date().optional(),
   userId: z.string().min(1, "User ID is required"),
   clientId: z.string().optional(),
   supplierId: z.string().optional(),
@@ -118,6 +119,10 @@ export const transactionFormSchema = z.object({
   paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK"]).optional(),
   reference: z.string().optional(),
   notes: z.string().optional(),
+  paymentDueDate: z.union([
+    z.string().optional(),
+    z.date().optional(),
+  ]).nullable().optional(),
   clientId: z.string().optional(),
   supplierId: z.string().optional(),
   items: z.array(z.object({

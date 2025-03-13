@@ -1,0 +1,9 @@
+{
+  "name": "inventory-management-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for the Inventory Management System",
+  "type": "module",
+  "scripts": {
+    "check-payments": "node check-payment-due-dates.js"
+  }
+}

@@ -20,6 +20,7 @@ interface CreateTransactionData {
   paymentMethod?: string;
   reference?: string;
   notes?: string;
+  paymentDueDate?: Date;
   clientId?: string;
   supplierId?: string;
   items: TransactionItem[];
@@ -85,7 +86,13 @@ export const GET = withAuth(async (req: NextRequest) => {
 export const POST = withValidation(
   transactionFormSchema,
   async (req: NextRequest, _, userId) => {
-    const data = await req.json() as CreateTransactionData;
+    const rawData = await req.json();
+    
+    // Convert paymentDueDate string to Date object if it exists
+    const data = {
+      ...rawData,
+      paymentDueDate: rawData.paymentDueDate ? new Date(rawData.paymentDueDate) : undefined
+    } as CreateTransactionData;
 
     // Set default values
     const amountPaid = data.amountPaid || 0;
@@ -139,6 +146,7 @@ export const POST = withValidation(
           paymentMethod: data.paymentMethod as PaymentMethod | undefined,
           reference: data.reference,
           notes: data.notes,
+          paymentDueDate: data.paymentDueDate,
           userId,
           clientId: data.clientId,
           supplierId: data.supplierId,

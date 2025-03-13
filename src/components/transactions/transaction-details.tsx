@@ -37,6 +37,7 @@ interface TransactionDetailsProps {
     paymentMethod?: "CASH" | "BANK_TRANSFER" | "CHECK" | null;
     reference?: string | null;
     notes?: string | null;
+    paymentDueDate?: string | null;
     createdAt: string;
     updatedAt: string;
     client?: {
@@ -239,6 +240,16 @@ export function TransactionDetails({ transaction, onClose }: TransactionDetailsP
                       : `Payment Method: ${getPaymentMethodLabel(transaction.paymentMethod)}`}
                   </span>
                 </div>
+                {transaction.paymentDueDate && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">
+                      {language === "ar" 
+                        ? `تاريخ استحقاق الدفع: ${formatDate(transaction.paymentDueDate)}` 
+                        : `Payment Due Date: ${formatDate(transaction.paymentDueDate)}`}
+                    </span>
+                  </div>
+                )}
                 {transaction.reference && (
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />

@@ -236,6 +236,7 @@
       "check": "شيك"
     },
     "reference": "المرجع",
+    "paymentDueDate": "تاريخ استحقاق الدفع",
     "items": "العناصر",
     "addItem": "إضافة عنصر",
     "removeItem": "إزالة العنصر",

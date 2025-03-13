@@ -24,6 +24,11 @@ import { transactionFormSchema } from "@/lib/validations";
 import { useCategoriesAndSuppliers } from "@/hooks/use-categories-and-suppliers";
 import { TranslatedText } from "@/components/language/translated-text";
 import { useLanguage } from "@/components/language/language-provider";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 type TransactionFormData = z.infer<typeof transactionFormSchema>;
 
@@ -171,20 +176,22 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
         }
       }
       
-      console.log("Submitting transaction data:", {
+      // Prepare data for submission
+      const submissionData = {
         ...data,
         remainingAmount: total - data.amountPaid,
-      });
+        // Convert paymentDueDate to ISO string if it exists
+        paymentDueDate: data.paymentDueDate ? new Date(data.paymentDueDate).toISOString() : undefined
+      };
+      
+      console.log("Submitting transaction data:", submissionData);
       
       const response = await fetch("/api/transactions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...data,
-          remainingAmount: total - data.amountPaid,
-        }),
+        body: JSON.stringify(submissionData),
       });
 
       if (!response.ok) {
@@ -400,6 +407,51 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
                         value={field.value || ""}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="paymentDueDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>
+                      <TranslatedText namespace="transactions" id="paymentDueDate" />
+                      ({language === "ar" ? "اختياري" : "Optional"})
+                    </FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(typeof field.value === 'string' ? new Date(field.value) : field.value, "PPP")
+                            ) : (
+                              <span>{language === "ar" ? "اختر تاريخ" : "Pick a date"}</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value ? (typeof field.value === 'string' ? new Date(field.value) : field.value) : undefined}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date < new Date(new Date().setHours(0, 0, 0, 0))
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}

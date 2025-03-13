@@ -124,6 +124,7 @@ model Transaction {
   paymentMethod   PaymentMethod?
   reference       String?           // For check number or bank transfer reference
   notes           String?
+  paymentDueDate  DateTime?         // Due date for remaining payment
   userId          String
   clientId        String?
   client          Client?           @relation("ClientTransactions", fields: [clientId], references: [id])

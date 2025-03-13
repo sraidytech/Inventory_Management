@@ -236,6 +236,7 @@
       "check": "Check"
     },
     "reference": "Reference",
+    "paymentDueDate": "Payment Due Date",
     "items": "Items",
     "addItem": "Add Item",
     "removeItem": "Remove Item",
