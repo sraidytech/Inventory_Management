@@ -27,7 +27,7 @@ interface CreateTransactionData {
 }
 
 // GET /api/transactions
-export const GET = withAuth(async (req: NextRequest) => {
+export const GET = withAuth(async (req: NextRequest, _, userId) => {
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("page") ?? "1");
   const limit = parseInt(searchParams.get("limit") ?? "10");
@@ -37,6 +37,7 @@ export const GET = withAuth(async (req: NextRequest) => {
   const endDate = searchParams.get("endDate");
 
   const where: Prisma.TransactionWhereInput = {
+    userId, // Filter transactions by user
     ...(type && { type }),
     ...(status && { status }),
     ...(startDate && endDate && {
