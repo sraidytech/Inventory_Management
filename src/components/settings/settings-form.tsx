@@ -15,7 +15,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useLanguage } from "@/components/language/language-provider";
@@ -25,7 +24,6 @@ import { toast } from "sonner";
 type FormValues = {
   language: "en" | "ar";
   theme: "light" | "dark";
-  notifications: boolean;
 };
 
 export function SettingsForm() {
@@ -39,7 +37,6 @@ export function SettingsForm() {
     defaultValues: {
       language: "en",
       theme: "light",
-      notifications: true,
     },
   });
 
@@ -55,7 +52,6 @@ export function SettingsForm() {
           form.reset({
             language: data.language || language,
             theme: data.theme || theme,
-            notifications: data.notifications !== undefined ? data.notifications : true,
           });
         }
       } catch (error) {
@@ -169,26 +165,6 @@ export function SettingsForm() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="notifications"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base"><TranslatedText namespace="common" id="notifications" /></FormLabel>
-                    <FormDescription>
-                      <TranslatedText namespace="settings" id="notificationsDescription" />
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
 
             <CardFooter className="flex justify-end px-0">
               <Button type="submit" disabled={loading}>

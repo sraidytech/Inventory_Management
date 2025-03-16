@@ -156,13 +156,20 @@ export const userSettingsSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
   language: z.enum(["en", "ar"]).default("en"),
   theme: z.enum(["light", "dark"]).default("light"),
-  notifications: z.boolean().default(true),
 });
 
 export const userSettingsFormSchema = z.object({
   language: z.enum(["en", "ar"]).default("en"),
   theme: z.enum(["light", "dark"]).default("light"),
-  notifications: z.boolean().default(true),
+});
+
+export const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(6, "Current password is required"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string().min(6, "Confirm password is required"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 export type ExpenseCategoryInput = z.infer<typeof expenseCategorySchema>;

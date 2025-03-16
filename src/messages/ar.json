@@ -133,6 +133,8 @@
   "products": {
     "title": "المنتجات",
     "addProduct": "إضافة منتج",
+    "createNewProduct": "إنشاء منتج جديد",
+    "addProductDescription": "أضف منتجًا جديدًا إلى مخزونك",
     "editProduct": "تعديل المنتج",
     "deleteProduct": "حذف المنتج",
     "productDetails": "تفاصيل المنتج",

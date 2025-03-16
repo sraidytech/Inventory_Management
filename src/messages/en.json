@@ -133,6 +133,8 @@
   "products": {
     "title": "Products",
     "addProduct": "Add Product",
+    "createNewProduct": "Create New Product",
+    "addProductDescription": "Add a new product to your inventory",
     "editProduct": "Edit Product",
     "deleteProduct": "Delete Product",
     "productDetails": "Product Details",

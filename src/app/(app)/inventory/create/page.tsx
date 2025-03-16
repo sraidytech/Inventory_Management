@@ -6,10 +6,13 @@ import { ProductForm } from "@/components/products/product-form";
 import { ProductFormData } from "@/lib/validations/product";
 import { useAuth } from "@clerk/nextjs";
 import { ProductFormSkeleton } from "@/components/products/loading";
+import { TranslatedText } from "@/components/language/translated-text";
+import { useLanguage } from "@/components/language/language-provider";
 
 export default function CreateProductPage() {
   const router = useRouter();
   const { isLoaded, userId } = useAuth();
+  const { } = useLanguage(); // Hook must be called at the top level
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,9 +90,11 @@ export default function CreateProductPage() {
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Create New Product</h1>
+        <h1 className="text-2xl font-bold">
+          <TranslatedText namespace="products" id="createNewProduct" />
+        </h1>
         <p className="text-muted-foreground">
-          Add a new product to your inventory
+          <TranslatedText namespace="products" id="addProductDescription" />
         </p>
       </div>
 

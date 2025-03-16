@@ -118,7 +118,7 @@ export function ProductForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Name */}
           <FormField
             control={form.control}
@@ -127,7 +127,11 @@ export function ProductForm({
               <FormItem>
                 <FormLabel><TranslatedText namespace="common" id="name" /></FormLabel>
                 <FormControl>
-                  <Input placeholder={language === "ar" ? "اسم المنتج" : "Product name"} {...field} />
+                  <Input 
+                    placeholder={language === "ar" ? "اسم المنتج" : "Product name"} 
+                    {...field} 
+                    className={isRTL ? "text-right" : ""}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -142,7 +146,11 @@ export function ProductForm({
               <FormItem>
                 <FormLabel><TranslatedText namespace="products" id="sku" /></FormLabel>
                 <FormControl>
-                  <Input placeholder="SKU" {...field} />
+                  <Input 
+                    placeholder="SKU" 
+                    {...field} 
+                    className={isRTL ? "text-right" : ""}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -170,6 +178,7 @@ export function ProductForm({
                       const value = e.target.value ? parseFloat(e.target.value) : 0;
                       field.onChange(value);
                     }}
+                    className={isRTL ? "text-right" : ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -225,6 +234,7 @@ export function ProductForm({
                       const value = e.target.value ? parseFloat(e.target.value) : 0;
                       field.onChange(value);
                     }}
+                    className={isRTL ? "text-right" : ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -254,6 +264,7 @@ export function ProductForm({
                       const value = e.target.value ? parseFloat(e.target.value) : 0;
                       field.onChange(value);
                     }}
+                    className={isRTL ? "text-right" : ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -343,7 +354,7 @@ export function ProductForm({
               <FormLabel><TranslatedText namespace="common" id="description" /></FormLabel>
               <FormControl>
                 <textarea
-                  className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${isRTL ? "text-right" : ""}`}
                   placeholder={language === "ar" ? "وصف المنتج" : "Product description"}
                   {...field}
                 />
@@ -359,7 +370,7 @@ export function ProductForm({
           </div>
         )}
 
-        <div className="flex justify-end space-x-4">
+        <div className={`flex ${isRTL ? 'justify-start space-x-reverse' : 'justify-end space-x-4'}`}>
           <Button
             type="button"
             variant="outline"
