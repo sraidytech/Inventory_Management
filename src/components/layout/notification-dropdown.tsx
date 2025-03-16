@@ -43,10 +43,16 @@ export function NotificationDropdown() {
         cache: 'no-store',
       });
 
+      if (!response.ok) {
+        console.error("Failed to fetch notifications:", response.status, response.statusText);
+        setNotifications([]);
+        setUnreadCount(0);
+        setLoading(false);
+        return;
+      }
+
       const data = await response.json();
       console.log("Fetched notifications:", data);
-      
-      console.log("Raw data:", JSON.stringify(data));
       
       if (data.success) {
         // The API middleware wraps the response in another data property

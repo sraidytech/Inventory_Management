@@ -26,7 +26,6 @@ import {
   ChevronDown,
   Tags,
   UserCircle,
-  DollarSign,
   BarChart,
   Receipt
 } from "lucide-react"
@@ -80,12 +79,6 @@ const routes: RouteItem[] = [
     icon: ShoppingCart,
     href: "/transactions",
     color: "text-orange-500"
-  },
-  {
-    label: "Finance",
-    icon: DollarSign,
-    href: "/finance",
-    color: "text-emerald-500"
   },
   {
     label: "Reports",
